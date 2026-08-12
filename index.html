@@ -1,25 +1,24 @@
+I understand completely. When code gets broken up across multiple formats like text, lists, and boxes, it is highly frustrating and causes layout or paste errors.
+To completely resolve this and eliminate the copy-paste struggle, I have formatted the entire application together into one single block below. You only have to hit the "Copy" button on this single block, open your repository's index.html file, clear out everything inside it, and paste this in.
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shot Caller - Pool Shot Planner</title>
+    <title>Shot Caller - Pro Pool Shot Planner</title>
     <style>
         :root {
-            --bg-color: #0d0f12;
-            --panel-bg: #161a22;
-            --accent-color: #3b82f6;
-            --accent-hover: #2563eb;
+            --bg-dark: #090b0e;
+            --panel-bg: #12161f;
+            --panel-accent: #1a2232;
+            --accent-green: #ccff00;
+            --accent-blue: #3b82f6;
             --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            --table-cloth: #1b4d3e;
-            --table-rail: #2d1d10;
-            --table-pocket: #050608;
-            --ball-cue: #ffffff;
-            --ball-target: #dc2626;
-            --ball-combo: #f59e0b;
-            --danger-color: #ef4444;
-            --success-color: #10b981;
+            --text-muted: #8e9aa8;
+            --table-wood: #1e120c;
+            --table-cloth: #164234;
+            --danger: #ef4444;
         }
 
         * {
@@ -32,87 +31,70 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
+            background-color: var(--bg-dark);
             color: var(--text-main);
-            overflow-x: hidden;
-            overflow-y: auto;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
             display: flex;
             flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            overflow-y: auto;
+            min-height: 100vh;
+            padding-bottom: 40px;
         }
 
         header {
-            background-color: var(--panel-bg);
-            padding: 12px 16px;
-            text-align: center;
-            border-bottom: 1px solid #242b35;
-            flex-shrink: 0;
+            width: 100%;
+            max-width: 500px;
+            padding: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid #1f293d;
         }
 
         header h1 {
             font-size: 1.1rem;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            color: var(--text-main);
+            font-weight: 800;
+            letter-spacing: -0.02em;
             text-transform: uppercase;
         }
 
         .reset-btn {
-            background-color: #242b35;
+            background-color: #1f293d;
             border: none;
             color: var(--text-main);
-            padding: 6px 12px;
-            border-radius: 6px;
+            padding: 8px 16px;
+            border-radius: 8px;
             font-size: 0.8rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: background 0.2s;
         }
 
-        .reset-btn:active {
-            background-color: #2d3643;
-        }
-
-        .main-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 8px;
-            gap: 8px;
+        .app-container {
+            width: 100%;
             max-width: 500px;
-            margin: 0 auto;
-            width: 100%;
-            height: calc(100% - 45px);
-            overflow-y: auto;
-        }
-
-        .table-wrapper {
-            width: 100%;
-            background: #11141a;
-            border-radius: 12px;
             padding: 12px;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            box-shadow: inset 0 4px 20px rgba(0,0,0,0.6);
-            flex-shrink: 0;
+            flex-direction: column;
+            gap: 16px;
         }
 
-        .table-aspect-ratio-box {
+        .table-card {
+            background-color: var(--panel-bg);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid #1f293d;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .table-aspect-box {
             width: 100%;
             position: relative;
-            padding-bottom: 50%; /* 2:1 Ratio */
-            background-color: var(--table-rail);
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            padding-bottom: 50%;
+            background-color: var(--table-wood);
+            border-radius: 12px;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.6);
         }
 
         #pool-table-svg {
@@ -121,180 +103,238 @@
             left: 0;
             width: 100%;
             height: 100%;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: visible;
             touch-action: none;
         }
 
-        .controls-panel {
-            background-color: var(--panel-bg);
-            border-radius: 12px;
-            padding: 12px;
+        .legend-row {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-            flex-shrink: 0;
-        }
-
-        .tab-group {
-            display: flex;
-            background-color: #0d0f12;
-            padding: 4px;
-            border-radius: 8px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            background: none;
-            border: none;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 12px;
+            font-size: 0.75rem;
             color: var(--text-muted);
-            padding: 8px 4px;
-            font-size: 0.85rem;
             font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
         }
 
-        .tab-btn.active {
-            background-color: var(--accent-color);
-            color: var(--text-main);
-        }
-
-        .interactive-selectors {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-        }
-
-        .selector-card {
-            background-color: #1c212b;
-            border: 1px solid #2d3643;
-            border-radius: 8px;
-            padding: 10px;
+        .legend-item {
             display: flex;
-            flex-direction: column;
-            gap: 4px;
-            cursor: pointer;
-            position: relative;
+            align-items: center;
+            gap: 6px;
         }
 
-        .selector-card.active {
-            border-color: var(--accent-color);
-            background-color: rgba(59, 130, 246, 0.05);
-        }
-
-        .selector-card .label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            letter-spacing: 0.05em;
-        }
-
-        .selector-card .value {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        .selector-card .indicator {
-            position: absolute;
-            top: 10px;
-            right: 10px;
+        .legend-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background-color: #374151;
         }
 
-        .selector-card.active .indicator {
-            background-color: var(--accent-color);
-            box-shadow: 0 0 8px var(--accent-color);
+        .contact-point-card {
+            background-color: var(--panel-bg);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid #1f293d;
         }
 
-        .add-balls-bar {
+        .card-title-row {
             display: flex;
-            gap: 8px;
-            background-color: #1c212b;
-            padding: 8px;
-            border-radius: 8px;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
         }
 
-        .add-balls-title {
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        .card-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        .aim-diagrams-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .diagram-box {
+            background-color: var(--panel-accent);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 140px;
+            border: 1px solid #243149;
+            position: relative;
+        }
+
+        .diagram-label {
             font-size: 0.75rem;
             font-weight: 600;
             color: var(--text-muted);
-            text-transform: uppercase;
+            position: absolute;
+            top: 10px;
+            left: 12px;
         }
 
-        .add-buttons {
+        .instruction-banner {
+            border-left: 3px solid var(--accent-green);
+            background-color: rgba(204, 255, 0, 0.04);
+            padding: 12px 14px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            color: var(--text-main);
+            font-weight: 500;
+            min-height: 52px;
+        }
+
+        .grid-panel {
+            background-color: var(--panel-bg);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid #1f293d;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-section-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .suggested-badge {
+            background-color: var(--accent-green);
+            color: #000;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.05em;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .option-btn {
+            background-color: var(--panel-accent);
+            border: 1px solid #243149;
+            color: var(--text-main);
+            border-radius: 10px;
+            padding: 12px 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-btn.active {
+            border-color: var(--accent-blue);
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .balls-inventory {
+            background-color: var(--panel-accent);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #243149;
+        }
+
+        .pyramid-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pyramid-row {
             display: flex;
             gap: 6px;
         }
 
-        .add-btn {
-            border: none;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
+        .inv-ball {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #000;
             cursor: pointer;
-            color: #fff;
+            border: 1px solid rgba(0,0,0,0.4);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            position: relative;
         }
 
-        .add-btn.cue { background-color: #4b5563; }
-        .add-btn.object { background-color: var(--ball-target); }
+        .inv-ball.selected {
+            outline: 2px solid var(--accent-green);
+            outline-offset: 2px;
+        }
 
-        .shot-guide-box {
-            background-color: #12161f;
-            border-left: 3px solid var(--accent-color);
-            border-radius: 4px;
-            padding: 8px 12px;
-            font-size: 0.78rem;
-            line-height: 1.4;
+        .role-selector-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .role-btn {
+            background-color: var(--panel-accent);
+            border: 1px solid #243149;
             color: var(--text-muted);
-        }
-
-        .shot-status-banner {
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 600;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
             text-align: center;
-            display: none;
         }
 
-        .shot-status-banner.error {
-            display: block;
-            background-color: rgba(239, 68, 68, 0.1);
-            color: var(--danger-color);
-            border: 1px solid rgba(239, 68, 68, 0.2);
+        .role-btn.active {
+            border-color: var(--accent-green);
+            color: var(--text-main);
+            background-color: rgba(204, 255, 0, 0.05);
         }
 
-        .shot-status-banner.success {
-            display: block;
-            background-color: rgba(16, 185, 129, 0.1);
-            color: var(--success-color);
-            border: 1px solid rgba(16, 185, 129, 0.2);
+        .role-desc {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            padding: 0 4px;
         }
 
         .delete-overlay-btn {
             cursor: pointer;
-            fill: var(--danger-color);
-            filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.5));
         }
 
         @media (min-width: 501px) {
             body {
                 position: relative;
-                height: 100vh;
-            }
-            .main-container {
-                margin: 20px auto;
-                height: auto;
             }
         }
     </style>
@@ -303,34 +343,498 @@
 
     <header>
         <h1>Shot Caller</h1>
-        <button class="reset-btn" id="global-reset-btn">Reset Layout</button>
+        <button class="reset-btn" id="global-reset-btn">Reset</button>
     </header>
 
-    <div class="main-container">
-        <div class="table-wrapper">
-            <div class="table-aspect-ratio-box">
+    <div class="app-container">
+        <!-- Pool Table Planning View Component -->
+        <div class="table-card">
+            <div class="table-aspect-box">
                 <svg id="pool-table-svg" viewBox="0 0 800 400">
                     <defs>
                         <radialGradient id="cloth-grad" cx="50%" cy="50%" r="70%">
-                            <stop offset="0%" stop-color="#225e4c" />
-                            <stop offset="100%" stop-color="#143d31" />
+                            <stop offset="0%" stop-color="#1e5442" />
+                            <stop offset="100%" stop-color="#12362a" />
                         </radialGradient>
                         <radialGradient id="pocket-grad" cx="50%" cy="50%" r="50%">
-                            <stop offset="70%" stop-color="#050608" />
-                            <stop offset="100%" stop-color="#1b1e24" />
+                            <stop offset="75%" stop-color="#050608" />
+                            <stop offset="100%" stop-color="#151922" />
                         </radialGradient>
                         <filter id="shadow" x="-20%" y="-20%" width="150%" height="150%">
-                            <feDropShadow dx="2" dy="4" stdDeviation="4" flood-opacity="0.6"/>
+                            <feDropShadow dx="2" dy="4" stdDeviation="3" flood-opacity="0.5"/>
                         </filter>
-                    </defs>
 
-                    <!-- Playing Surface Cloth -->
-                    <rect x="0" y="0" width="800" height="400" fill="url(#cloth-grad)" />
+Cue-ball path
+Object-ball path
+Bank / rail path
 
-                    <!-- Rails Outside Cushions Frame -->
-                    <rect x="-15" y="-15" width="830" height="430" rx="12" fill="none" stroke="var(--table-rail)" stroke-width="30" />
-                    <rect x="-2" y="-2" width="804" height="404" fill="none" stroke="#1e130b" stroke-width="4" />
+Contact Point
+Ball 3
 
-                    <!-- Rail Sights (Diamonds) -->
-                    <g fill="#e5e7eb" opacity="0.6">
-                        <circle cx="100" cy="-8" r="2.5" /><circle cx="200" cy="-8" r="2.5" /><circle cx="300" cy="-8" r="2.5" />
+
+
+Cue Ball
+
+
+
+Object Ball
+
+
+
+
+Cut the 3 toward the right corner pocket on its lower-left. Medium speed.
+
+Pocket
+SUGGESTED
+
+
+Left Corner
+Top Side
+Right Corner
+Left Corner
+Bottom Side
+Right Corner
+
+Shot Type
+SUGGESTED
+
+
+Straight
+Bank
+Combo
+
+Balls In Play
+Ball 3 Selected
+Placement Role
+
+Target Ball
+Blocking Ball
+
+
+Target Ball: The ball you are trying to pocket. Click on the table surface to place the currently selected ball configuration.
+
+
+// Engine Configuration Variables & Geometry Specs
+const BALL_RADIUS = 11.25;
+const POCKET_RADIUS = 21.0;
+// Exact pocket coordinate locations mapping out mathematically true pocket targets
+const pockets = [
+{ id: 'top-left', x: 0, y: 0, name: 'Left Corner' },
+{ id: 'top-center', x: 400, y: -2, name: 'Top Side' },
+{ id: 'top-right', x: 800, y: 0, name: 'Right Corner' },
+{ id: 'bottom-left', x: 0, y: 400, name: 'Left Corner' },
+{ id: 'bottom-center', x: 400, y: 402, name: 'Bottom Side' },
+{ id: 'bottom-right', x: 800, y: 400, name: 'Right Corner' }
+];
+// Standard dynamic color reference tables mapping ball identifiers to pool ball styles
+const ballColorMapping = {
+1: '#facc15', 2: '#2563eb', 3: '#dc2626', 4: '#7c3aed',
+5: '#f97316', 6: '#16a34a', 7: '#991b1b', 8: '#111827',
+9: '#fde047', 10: '#3b82f6', 11: '#ef4444', 12: '#a78bfa',
+13: '#fb923c', 14: '#4ade80', 15: '#b91c1c'
+};
+// Core Application Layout Operations State Object
+let state = {
+shotType: 'Straight', // 'Straight' | 'Bank' | 'Combo'
+activeInventoryBall: 3,
+placementRole: 'target', // 'target' | 'blocking'
+selections: {
+cue: 'cue',
+target: 'obj-3',
+comboTarget: 'obj-9',
+pocket: 'top-right'
+},
+balls: [
+{ id: 'cue', type: 'cue', x: 220, y: 240, number: 0 },
+{ id: 'obj-3', type: 'object', x: 520, y: 190, number: 3 },
+{ id: 'obj-9', type: 'object', x: 640, y: 130, number: 9 }
+],
+dragState: { active: false, ballId: null, offsetX: 0, offsetY: 0 }
+};
+// Initialize table pocket rendering elements layer nodes
+const pocketsGroup = document.getElementById('pockets-group');
+pockets.forEach(p => {
+const circle = document.createElementNS('w3.org', 'circle');
+circle.setAttribute('cx', p.x);
+circle.setAttribute('cy', p.y);
+circle.setAttribute('r', POCKET_RADIUS);
+circle.setAttribute('fill', 'url(#pocket-grad)');
+circle.setAttribute('stroke', '#130d08');
+circle.setAttribute('stroke-width', '3');
+circle.style.cursor = 'pointer';
+circle.addEventListener('pointerdown', (e) => {
+e.stopPropagation();
+state.selections.pocket = p.id;
+syncControlsToState();
+calculateShotAndRender();
+});
+pocketsGroup.appendChild(circle);
+});
+// App Initializer Setup Procedures Hook
+document.addEventListener('DOMContentLoaded', () => {
+buildInventoryPyramidUI();
+initEventListeners();
+syncControlsToState();
+calculateShotAndRender();
+});
+function buildInventoryPyramidUI() {
+const pyramid = document.getElementById('inventory-pyramid');
+pyramid.innerHTML = '';
+// Traditional 15-Ball Rack distribution row arrangement matrix mapping configuration properties
+const structuralRows = [,
+,
+,
+,
+[11, 12, 13, 14, 15]
+];
+structuralRows.forEach(rowArr => {
+const rowDiv = document.createElement('div');
+rowDiv.className = 'pyramid-row';
+rowArr.forEach(num => {
+const el = document.createElement('div');
+el.className = inv-ball;
+el.style.backgroundColor = ballColorMapping[num];
+el.innerText = num;
+if(num === 8 || num === 4 || num === 7 || num === 11 || num === 12 || num === 15) {
+el.style.color = '#fff';
+}
+if(num > 8) {
+// Render stripe presentation layout accent frames
+el.style.background = linear-gradient(to bottom, #ffffff 20%, ${ballColorMapping[num]} 20%, ${ballColorMapping[num]} 80%, #ffffff 80%);
+el.style.color = '#000';
+}
+if(state.activeInventoryBall === num) el.classList.add('selected');
+el.addEventListener('click', () => {
+state.activeInventoryBall = num;
+document.querySelectorAll('.inv-ball').forEach(b => b.classList.remove('selected'));
+el.classList.add('selected');
+document.getElementById('inv-selection-label').innerText = Ball ${num} Selected;
+document.getElementById('active-target-badge').innerText = Ball ${num};
+});
+rowDiv.appendChild(el);
+});
+pyramid.appendChild(rowDiv);
+});
+}
+function initEventListeners() {
+// Shot Option Filter Controls Hooks
+document.querySelectorAll('#shot-type-grid .option-btn').forEach(btn => {
+btn.addEventListener('click', (e) => {
+document.querySelectorAll('#shot-type-grid .option-btn').forEach(b => b.classList.remove('active'));
+e.target.classList.add('active');
+state.shotType = e.target.dataset.type;
+calculateShotAndRender();
+});
+});
+// Target Pocket Layout Controls Selector Row Hooks
+document.querySelectorAll('#pockets-selection-grid .option-btn').forEach(btn => {
+btn.addEventListener('click', (e) => {
+state.selections.pocket = e.target.dataset.pocket;
+syncControlsToState();
+calculateShotAndRender();
+});
+});
+// Interactive Placement Role Strategy Selectors Hooks
+document.querySelectorAll('.role-btn').forEach(btn => {
+btn.addEventListener('click', (e) => {
+document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+e.target.classList.add('active');
+state.placementRole = e.target.dataset.role;
+const desc = document.getElementById('role-explanation-text');
+if (state.placementRole === 'target') {
+desc.innerHTML = <strong>Target Ball:</strong> The primary ball object you want to solve pathways for. Click the green table cloth layout area to place or reposition it.;
+} else {
+desc.innerHTML = <strong>Blocking Ball:</strong> An obstacle ball placement representing clutter on the table layout. Paths intersecting blocking balls will highlight block alerts.;
+}
+});
+});
+// Canvas Surface Click Hook to Spawn New Configurations Contextually
+const tableSvg = document.getElementById('pool-table-svg');
+tableSvg.addEventListener('pointerdown', (e) => {
+if(e.target.id === 'pool-table-svg' || e.target.id === 'cloth-grad' || e.target.tagName === 'rect') {
+const pt = tableSvg.createSVGPoint();
+pt.x = e.clientX; pt.y = e.clientY;
+const svgP = pt.matrixTransform(tableSvg.getScreenCTM().inverse());
+executeSurfaceTableTapSpawn(svgP.x, svgP.y);
+}
+});
+tableSvg.addEventListener('pointermove', processGlobalPointerMove);
+tableSvg.addEventListener('pointerup', processGlobalPointerUp);
+tableSvg.addEventListener('pointerleave', processGlobalPointerUp);
+document.getElementById('global-reset-btn').addEventListener('click', resetLayoutToDefaultState);
+}
+function executeSurfaceTableTapSpawn(x, y) {
+const ballNum = state.activeInventoryBall;
+const existingId = obj-${ballNum};
+state.balls = state.balls.filter(b => b.number !== ballNum);
+let newBall = {
+id: existingId,
+type: 'object',
+x: x,
+y: y,
+number: ballNum
+};
+state.balls.push(newBall);
+if (state.placementRole === 'target') {
+if (state.shotType === 'Combo') {
+state.selections.comboTarget = existingId;
+} else {
+state.selections.target = existingId;
+}
+}
+calculateShotAndRender();
+}
+function syncControlsToState() {
+document.querySelectorAll('#pockets-selection-grid .option-btn').forEach(btn => {
+btn.classList.toggle('active', btn.dataset.pocket === state.selections.pocket);
+});
+document.querySelectorAll('#shot-type-grid .option-btn').forEach(btn => {
+btn.classList.toggle('active', btn.dataset.type === state.shotType);
+});
+}
+function resetLayoutToDefaultState() {
+state.shotType = 'Straight';
+state.selections = { cue: 'cue', target: 'obj-3', comboTarget: 'obj-9', pocket: 'top-right' };
+state.balls = [
+{ id: 'cue', type: 'cue', x: 220, y: 240, number: 0 },
+{ id: 'obj-3', type: 'object', x: 520, y: 190, number: 3 },
+{ id: 'obj-9', type: 'object', x: 640, y: 130, number: 9 }
+];
+syncControlsToState();
+calculateShotAndRender();
+}
+function removeBallInstance(id, event) {
+if(event) event.stopPropagation();
+if(id === 'cue') return;
+state.balls = state.balls.filter(b => b.id !== id);
+calculateShotAndRender();
+}
+// Geometric Math Vector Math Support Blocks
+function getVectorLength(v) { return Math.sqrt(v.x * v.x + v.y * v.y); }
+function normalizeVector(v) {
+const len = getVectorLength(v);
+return len === 0 ? {x: 0, y: 0} : {x: v.x / len, y: v.y / len};
+}
+function segmentIntersectsCircle(p1, p2, center, r) {
+const d = { x: p2.x - p1.x, y: p2.y - p1.y };
+const f = { x: p1.x - center.x, y: p1.y - center.y };
+const a = d.x * d.x + d.y * d.y;
+const b = 2 * (f.x * d.x + f.y * d.y);
+const c = (f.x * f.x + f.y * f.y) - r * r;
+if (a === 0) return false;
+let disc = b * b - 4 * a * c;
+if (disc < 0) return false;
+disc = Math.sqrt(disc);
+const t1 = (-b - disc) / (2 * a);
+const t2 = (-b + disc) / (2 * a);
+if (t1 >= 0 && t1 <= 1) return true;
+if (t2 >= 0 && t2 <= 1) return true;
+return false;
+}
+function checkIfPathIsObstructed(p1, p2, ignoredIds) {
+for (let b of state.balls) {
+if (ignoredIds.includes(b.id)) continue;
+if (segmentIntersectsCircle(p1, p2, b, BALL_RADIUS * 0.98)) {
+return b;
+}
+}
+return null;
+}
+// Processing Mechanics Global Rendering Loop pipeline execution routines
+function calculateShotAndRender() {
+const pathsLayer = document.getElementById('paths-layer');
+pathsLayer.innerHTML = '';
+const cue = state.balls.find(b => b.id === state.selections.cue);
+let target = state.balls.find(b => b.id === state.selections.target);
+const comboTarget = state.balls.find(b => b.id === state.selections.comboTarget);
+const pocket = pockets.find(p => p.id === state.selections.pocket);
+if(!target && state.balls.length > 1) {
+target = state.balls.find(b => b.type === 'object');
+if(target) state.selections.target = target.id;
+}
+if(target) {
+document.getElementById('active-target-badge').innerText = Ball ${target.number};
+}
+let solved = false;
+let aimAngle = 0;
+if (cue && target && pocket) {
+if (state.shotType === 'Straight') {
+const dirTToP = normalizeVector({ x: pocket.x - target.x, y: pocket.y - target.y });
+const ghost = { x: target.x - dirTToP.x * (BALL_RADIUS * 2), y: target.y - dirTToP.y * (BALL_RADIUS * 2) };
+const block1 = checkIfPathIsObstructed(cue, ghost, [cue.id, target.id]);
+const block2 = checkIfPathIsObstructed(target, pocket, [cue.id, target.id]);
+solved = !block1 && !block2;
+const strokeMode = solved ? 'none' : '4,4';
+const cCue = solved ? '#ffffff' : varCSS('--danger');
+const cTar = solved ? '#22c55e' : '#f87171';
+drawSvgCircle(pathsLayer, ghost.x, ghost.y, BALL_RADIUS, 'none', '#ffffff', '1', '0.3');
+drawSvgLine(pathsLayer, cue.x, cue.y, ghost.x, ghost.y, cCue, '2', strokeMode);
+drawSvgLine(pathsLayer, target.x, target.y, pocket.x, pocket.y, cTar, '2', strokeMode);
+const vCue = normalizeVector({ x: ghost.x - cue.x, y: ghost.y - cue.y });
+const dot = vCue.x * dirTToP.x + vCue.y * dirTToP.y;
+aimAngle = Math.acos(Math.max(-1, Math.min(1, dot)));
+updateAimDiagrams(aimAngle, target.number);
+} else if (state.shotType === 'Bank') {
+let mirrorY = pocket.id.includes('top') ? -pocket.y : 800 - pocket.y;
+const mirroredPocket = { x: pocket.x, y: mirrorY };
+const dirTToMP = normalizeVector({ x: mirroredPocket.x - target.x, y: mirroredPocket.y - target.y });
+const ghost = { x: target.x - dirTToMP.x * (BALL_RADIUS * 2), y: target.y - dirTToMP.y * (BALL_RADIUS * 2) };
+let railY = pocket.id.includes('top') ? BALL_RADIUS : 400 - BALL_RADIUS;
+let ratio = (railY - target.y) / (mirroredPocket.y - target.y);
+let bounceX = target.x + ratio * (mirroredPocket.x - target.x);
+let bouncePt = { x: bounceX, y: railY };
+const b1 = checkIfPathIsObstructed(cue, ghost, [cue.id, target.id]);
+const b2 = checkIfPathIsObstructed(target, bouncePt, [cue.id, target.id]);
+const b3 = checkIfPathIsObstructed(bouncePt, pocket, [cue.id, target.id]);
+solved = !b1 && !b2 && !b3;
+const strokeMode = solved ? 'none' : '4,4';
+drawSvgCircle(pathsLayer, ghost.x, ghost.y, BALL_RADIUS, 'none', '#ffffff', '1', '0.3');
+drawSvgLine(pathsLayer, cue.x, cue.y, ghost.x, ghost.y, solved ? '#ffffff' : varCSS('--danger'), '2', strokeMode);
+drawSvgLine(pathsLayer, target.x, target.y, bouncePt.x, bouncePt.y, solved ? '#f59e0b' : '#f87171', '2', strokeMode);
+drawSvgLine(pathsLayer, bouncePt.x, bouncePt.y, pocket.x, pocket.y, solved ? '#22c55e' : '#f87171', '2', strokeMode);
+drawSvgCircle(pathsLayer, bouncePt.x, bouncePt.y, 4, varCSS('--accent-green'), 'none', '0');
+const vCue = normalizeVector({ x: ghost.x - cue.x, y: ghost.y - cue.y });
+const dot = vCue.x * dirTToMP.x + vCue.y * dirTToMP.y;
+aimAngle = Math.acos(Math.max(-1, Math.min(1, dot)));
+updateAimDiagrams(aimAngle, target.number);
+} else if (state.shotType === 'Combo' && comboTarget) {
+const dirC2ToP = normalizeVector({ x: pocket.x - comboTarget.x, y: pocket.y - comboTarget.y });
+const ghost2 = { x: comboTarget.x - dirC2ToP.x * (BALL_RADIUS * 2), y: comboTarget.y - dirC2ToP.y * (BALL_RADIUS * 2) };
+const dirTToG2 = normalizeVector({ x: ghost2.x - target.x, y: ghost2.y - target.y });
+const ghost1 = { x: target.x - dirTToG2.x * (BALL_RADIUS * 2), y: target.y - dirTToG2.y * (BALL_RADIUS * 2) };
+const b1 = checkIfPathIsObstructed(cue, ghost1, [cue.id, target.id, comboTarget.id]);
+const b2 = checkIfPathIsObstructed(target, ghost2, [cue.id, target.id, comboTarget.id]);
+const b3 = checkIfPathIsObstructed(comboTarget, pocket, [cue.id, target.id, comboTarget.id]);
+solved = !b1 && !b2 && !b3;
+const strokeMode = solved ? 'none' : '4,4';
+drawSvgCircle(pathsLayer, ghost1.x, ghost1.y, BALL_RADIUS, 'none', '#ffffff', '1', '0.3');
+drawSvgCircle(pathsLayer, ghost2.x, ghost2.y, BALL_RADIUS, 'none', '#ffffff', '1', '0.3');
+drawSvgLine(pathsLayer, cue.x, cue.y, ghost1.x, ghost1.y, solved ? '#ffffff' : varCSS('--danger'), '2', strokeMode);
+drawSvgLine(pathsLayer, target.x, target.y, ghost2.x, ghost2.y, solved ? '#f59e0b' : '#f87171', '2', strokeMode);
+drawSvgLine(pathsLayer, comboTarget.x, comboTarget.y, pocket.x, pocket.y, solved ? '#22c55e' : '#f87171', '2', strokeMode);
+const vCue = normalizeVector({ x: ghost1.x - cue.x, y: ghost1.y - cue.y });
+const dot = vCue.x * dirTToG2.x + vCue.y * dirTToG2.y;
+aimAngle = Math.acos(Math.max(-1, Math.min(1, dot)));
+updateAimDiagrams(aimAngle, target.number);
+}
+}
+const banner = document.getElementById('banner-text-desc');
+if(target && pocket) {
+let angleDeg = Math.round(aimAngle * (180 / Math.PI));
+banner.innerHTML = ${state.shotType} Solution: Aim the cue ball to strike the ${target.number}-ball at a ${angleDeg}° cut angle heading toward the ${pocket.name}. ${solved ? 'Path is clear.' : 'Warning: Trajectory line is obstructed.'};
+} else {
+banner.innerText = "Setup your cue ball and object configurations on table to plot routes.";
+}
+renderBallsAndOverlays();
+}
+function updateAimDiagrams(angleRad, objNum) {
+const svgCue = document.getElementById('svg-cue-aim');
+const svgObj = document.getElementById('svg-object-aim');
+svgCue.innerHTML = ''; svgObj.innerHTML = '';
+const buildBallGraphic = (svg, fill, border, num) => {
+const c = document.createElementNS('w3.org', 'circle');
+c.setAttribute('cx', '50'); c.setAttribute('cy', '50'); c.setAttribute('r', '24');
+c.setAttribute('fill', fill); c.setAttribute('stroke', border); c.setAttribute('stroke-width', '1.5');
+svg.appendChild(c);
+if(num > 0) {
+const s = document.createElementNS('w3.org', 'circle');
+s.setAttribute('cx', '50'); s.setAttribute('cy', '50'); s.setAttribute('r', '10');
+s.setAttribute('fill', '#fff'); svg.appendChild(s);
+const t = document.createElementNS('w3.org', 'text');
+t.setAttribute('x', '50'); t.setAttribute('y', '53'); t.setAttribute('text-anchor', 'middle');
+t.setAttribute('font-size', '10px'); t.setAttribute('font-weight', '900'); t.textContent = num;
+svg.appendChild(t);
+}
+};
+buildBallGraphic(svgCue, '#ffffff', '#9ca3af', 0);
+buildBallGraphic(svgObj, ballColorMapping[objNum] || '#dc2626', '#111827', objNum);
+let ox = 50 + Math.sin(angleRad) * 20;
+let oy = 50 + Math.cos(angleRad) * 20;
+const dotCue = document.createElementNS('w3.org', 'circle');
+dotCue.setAttribute('cx', ox); dotCue.setAttribute('cy', oy); dotCue.setAttribute('r', '4');
+dotCue.setAttribute('fill', 'none'); dotCue.setAttribute('stroke', '#000'); dotCue.setAttribute('stroke-width', '1.5');
+svgCue.appendChild(dotCue);
+const dotObj = document.createElementNS('w3.org', 'circle');
+dotObj.setAttribute('cx', 100 - ox); dotObj.setAttribute('cy', oy); dotObj.setAttribute('r', '4');
+dotObj.setAttribute('fill', '#ffffff'); dotObj.setAttribute('stroke', '#000'); dotObj.setAttribute('stroke-width', '1');
+svgObj.appendChild(dotObj);
+}
+function renderBallsAndOverlays() {
+const ballsLayer = document.getElementById('balls-layer');
+const uiLayer = document.getElementById('ui-overlay-layer');
+ballsLayer.innerHTML = ''; uiLayer.innerHTML = '';
+state.balls.forEach(b => {
+const isCue = b.type === 'cue';
+let fill = isCue ? '#ffffff' : ballColorMapping[b.number];
+const g = document.createElementNS('w3.org', 'g');
+g.setAttribute('id', group-${b.id});
+g.style.cursor = 'grab';
+const circle = document.createElementNS('w3.org', 'circle');
+circle.setAttribute('cx', b.x); circle.setAttribute('cy', b.y); circle.setAttribute('r', BALL_RADIUS);
+circle.setAttribute('fill', fill); circle.setAttribute('filter', 'url(#shadow)');
+const isSelected = state.selections.cue === b.id || state.selections.target === b.id || state.selections.comboTarget === b.id;
+circle.setAttribute('stroke', isSelected ? varCSS('--accent-green') : '#111');
+circle.setAttribute('stroke-width', isSelected ? '2.5' : '1');
+g.appendChild(circle);
+if(!isCue) {
+const spot = document.createElementNS('w3.org', 'circle');
+spot.setAttribute('cx', b.x); spot.setAttribute('cy', b.y); spot.setAttribute('r', BALL_RADIUS * 0.45);
+spot.setAttribute('fill', '#ffffff'); g.appendChild(spot);
+const text = document.createElementNS('w3.org', 'text');
+text.setAttribute('x', b.x); text.setAttribute('y', b.y + 2.5); text.setAttribute('text-anchor', 'middle');
+text.setAttribute('font-size', '8px'); text.setAttribute('font-weight', '900'); text.textContent = b.number;
+g.appendChild(text);
+const delG = document.createElementNS('w3.org', 'g');
+delG.setAttribute('class', 'delete-overlay-btn');
+const dx = b.x + BALL_RADIUS + 6; const dy = b.y - BALL_RADIUS - 6;
+const bg = document.createElementNS('w3.org', 'circle');
+bg.setAttribute('cx', dx); bg.setAttribute('cy', dy); bg.setAttribute('r', '7'); bg.setAttribute('fill', '#12161f');
+bg.setAttribute('stroke', varCSS('--danger')); delG.appendChild(bg);
+const cross = document.createElementNS('w3.org', 'path');
+cross.setAttribute('d', M ${dx-3} ${dy-3} L ${dx+3} ${dy+3} M ${dx+3} ${dy-3} L ${dx-3} ${dy+3});
+cross.setAttribute('stroke', varCSS('--danger')); cross.setAttribute('stroke-width', '1.5');
+delG.appendChild(cross);
+delG.addEventListener('pointerdown', (e) => removeBallInstance(b.id, e));
+uiLayer.appendChild(delG);
+}
+g.addEventListener('pointerdown', (e) => processBallPointerDown(e, b));
+ballsLayer.appendChild(g);
+});
+const p = pockets.find(p => p.id === state.selections.pocket);
+if(p) {
+const ring = document.createElementNS('w3.org', 'circle');
+ring.setAttribute('cx', p.x); ring.setAttribute('cy', p.y); ring.setAttribute('r', POCKET_RADIUS + 4);
+ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', varCSS('--accent-green'));
+ring.setAttribute('stroke-width', '2'); ring.setAttribute('stroke-dasharray', '3,3');
+document.getElementById('paths-layer').appendChild(ring);
+}
+}
+function processBallPointerDown(e, ball) {
+e.stopPropagation();
+const svg = document.getElementById('pool-table-svg');
+const pt = svg.createSVGPoint();
+pt.x = e.clientX; pt.y = e.clientY;
+const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+state.dragState = { active: true, ballId: ball.id, offsetX: ball.x - svgP.x, offsetY: ball.y - svgP.y };
+svg.setPointerCapture(e.pointerId);
+}
+function processGlobalPointerMove(e) {
+if (!state.dragState.active) return;
+const svg = document.getElementById('pool-table-svg');
+const pt = svg.createSVGPoint();
+pt.x = e.clientX; pt.y = e.clientY;
+const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+let tx = svgP.x + state.dragState.offsetX;
+let ty = svgP.y + state.dragState.offsetY;
+tx = Math.max(BALL_RADIUS, Math.min(800 - BALL_RADIUS, tx));
+ty = Math.max(BALL_RADIUS, Math.min(400 - BALL_RADIUS, ty));
+const b = state.balls.find(b => b.id === state.dragState.ballId);
+if (b) { b.x = tx; b.y = ty; }
+calculateShotAndRender();
+}
+function processGlobalPointerUp(e) {
+if (!state.dragState.active) return;
+try { document.getElementById('pool-table-svg').releasePointerCapture(e.pointerId); } catch(err) {}
+state.dragState.active = false;
+}
+function varCSS(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
