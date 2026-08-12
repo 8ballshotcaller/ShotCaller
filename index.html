@@ -1,368 +1,292 @@
-I understand completely. When code gets broken up across multiple formats like text, lists, and boxes, it is highly frustrating and causes layout or paste errors.
-To completely resolve this and eliminate the copy-paste struggle, I have formatted the entire application together into one single block below. You only have to hit the "Copy" button on this single block, open your repository's index.html file, clear out everything inside it, and paste this in.
+Shot Caller - Pro Pool Shot Planner
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shot Caller - Pro Pool Shot Planner</title>
-    <style>
-        :root {
-            --bg-dark: #090b0e;
-            --panel-bg: #12161f;
-            --panel-accent: #1a2232;
-            --accent-green: #ccff00;
-            --accent-blue: #3b82f6;
-            --text-main: #f3f4f6;
-            --text-muted: #8e9aa8;
-            --table-wood: #1e120c;
-            --table-cloth: #164234;
-            --danger: #ef4444;
-        }
+:root {
+--bg-dark: #090b0e;
+--panel-bg: #12161f;
+--panel-accent: #1a2232;
+--accent-green: #ccff00;
+--accent-blue: #3b82f6;
+--text-main: #f3f4f6;
+--text-muted: #8e9aa8;
+--table-wood: #1e120c;
+--table-cloth: #164234;
+--danger: #ef4444;
+}
+* {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+user-select: none;
+-webkit-user-select: none;
+}
+body {
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+background-color: var(--bg-dark);
+color: var(--text-main);
+display: flex;
+flex-direction: column;
+align-items: center;
+overflow-x: hidden;
+overflow-y: auto;
+min-height: 100vh;
+padding-bottom: 40px;
+}
+header {
+width: 100%;
+max-width: 500px;
+padding: 16px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+background-color: var(--panel-bg);
+border-bottom: 1px solid #1f293d;
+}
+header h1 {
+font-size: 1.1rem;
+font-weight: 800;
+letter-spacing: -0.02em;
+text-transform: uppercase;
+}
+.reset-btn {
+background-color: #1f293d;
+border: none;
+color: var(--text-main);
+padding: 8px 16px;
+border-radius: 8px;
+font-size: 0.8rem;
+font-weight: 700;
+cursor: pointer;
+}
+.app-container {
+width: 100%;
+max-width: 500px;
+padding: 12px;
+display: flex;
+flex-direction: column;
+gap: 16px;
+}
+.table-card {
+background-color: var(--panel-bg);
+border-radius: 16px;
+padding: 16px;
+border: 1px solid #1f293d;
+box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.table-aspect-box {
+width: 100%;
+position: relative;
+padding-bottom: 50%;
+background-color: var(--table-wood);
+border-radius: 12px;
+box-shadow: 0 12px 24px rgba(0,0,0,0.6);
+}
+#pool-table-svg {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+border-radius: 12px;
+overflow: visible;
+touch-action: none;
+}
+.legend-row {
+display: flex;
+justify-content: center;
+gap: 16px;
+margin-top: 12px;
+font-size: 0.75rem;
+color: var(--text-muted);
+font-weight: 600;
+}
+.legend-item {
+display: flex;
+align-items: center;
+gap: 6px;
+}
+.legend-dot {
+width: 8px;
+height: 8px;
+border-radius: 50%;
+}
+.contact-point-card {
+background-color: var(--panel-bg);
+border-radius: 16px;
+padding: 16px;
+border: 1px solid #1f293d;
+}
+.card-title-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 16px;
+}
+.card-title {
+font-size: 0.95rem;
+font-weight: 700;
+letter-spacing: -0.01em;
+}
+.card-badge {
+font-size: 0.75rem;
+font-weight: 700;
+color: var(--accent-green);
+}
+.aim-diagrams-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 12px;
+margin-bottom: 16px;
+}
+.diagram-box {
+background-color: var(--panel-accent);
+border-radius: 12px;
+padding: 16px;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+min-height: 140px;
+border: 1px solid #243149;
+position: relative;
+}
+.diagram-label {
+font-size: 0.75rem;
+font-weight: 600;
+color: var(--text-muted);
+position: absolute;
+top: 10px;
+left: 12px;
+}
+.instruction-banner {
+border-left: 3px solid var(--accent-green);
+background-color: rgba(204, 255, 0, 0.04);
+padding: 12px 14px;
+border-radius: 0 8px 8px 0;
+font-size: 0.8rem;
+line-height: 1.4;
+color: var(--text-main);
+font-weight: 500;
+min-height: 52px;
+}
+.grid-panel {
+background-color: var(--panel-bg);
+border-radius: 16px;
+padding: 16px;
+border: 1px solid #1f293d;
+display: flex;
+flex-direction: column;
+gap: 16px;
+}
+.panel-header-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+.panel-section-title {
+font-size: 0.9rem;
+font-weight: 700;
+color: var(--text-main);
+}
+.suggested-badge {
+background-color: var(--accent-green);
+color: #000;
+font-size: 0.65rem;
+font-weight: 800;
+padding: 3px 8px;
+border-radius: 6px;
+letter-spacing: 0.05em;
+}
+.options-grid {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 8px;
+}
+.option-btn {
+background-color: var(--panel-accent);
+border: 1px solid #243149;
+color: var(--text-main);
+border-radius: 10px;
+padding: 12px 6px;
+font-size: 0.78rem;
+font-weight: 600;
+text-align: center;
+cursor: pointer;
+transition: all 0.2s;
+}
+.option-btn.active {
+border-color: var(--accent-blue);
+background-color: rgba(59, 130, 246, 0.1);
+}
+.balls-inventory {
+background-color: var(--panel-accent);
+border-radius: 12px;
+padding: 16px;
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 12px;
+border: 1px solid #243149;
+}
+.pyramid-container {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 6px;
+}
+.pyramid-row {
+display: flex;
+gap: 6px;
+}
+.inv-ball {
+width: 24px;
+height: 24px;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 0.65rem;
+font-weight: 800;
+color: #000;
+cursor: pointer;
+border: 1px solid rgba(0,0,0,0.4);
+box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+position: relative;
+}
+.inv-ball.selected {
+outline: 2px solid var(--accent-green);
+outline-offset: 2px;
+}
+.role-selector-row {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 10px;
+}
+.role-btn {
+background-color: var(--panel-accent);
+border: 1px solid #243149;
+color: var(--text-muted);
+padding: 12px;
+border-radius: 10px;
+font-size: 0.82rem;
+font-weight: 700;
+cursor: pointer;
+text-align: center;
+}
+.role-btn.active {
+border-color: var(--accent-green);
+color: var(--text-main);
+background-color: rgba(204, 255, 0, 0.05);
+}
+.role-desc {
+font-size: 0.72rem;
+color: var(--text-muted);
+line-height: 1.4;
+padding: 0 4px;
+}
+.delete-overlay-btn {
+cursor: pointer;
+}
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow-x: hidden;
-            overflow-y: auto;
-            min-height: 100vh;
-            padding-bottom: 40px;
-        }
-
-        header {
-            width: 100%;
-            max-width: 500px;
-            padding: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: var(--panel-bg);
-            border-bottom: 1px solid #1f293d;
-        }
-
-        header h1 {
-            font-size: 1.1rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            text-transform: uppercase;
-        }
-
-        .reset-btn {
-            background-color: #1f293d;
-            border: none;
-            color: var(--text-main);
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .app-container {
-            width: 100%;
-            max-width: 500px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .table-card {
-            background-color: var(--panel-bg);
-            border-radius: 16px;
-            padding: 16px;
-            border: 1px solid #1f293d;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-        }
-
-        .table-aspect-box {
-            width: 100%;
-            position: relative;
-            padding-bottom: 50%;
-            background-color: var(--table-wood);
-            border-radius: 12px;
-            box-shadow: 0 12px 24px rgba(0,0,0,0.6);
-        }
-
-        #pool-table-svg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: 12px;
-            overflow: visible;
-            touch-action: none;
-        }
-
-        .legend-row {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            margin-top: 12px;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .legend-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-
-        .contact-point-card {
-            background-color: var(--panel-bg);
-            border-radius: 16px;
-            padding: 16px;
-            border: 1px solid #1f293d;
-        }
-
-        .card-title-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .card-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-        }
-
-        .card-badge {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--accent-green);
-        }
-
-        .aim-diagrams-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .diagram-box {
-            background-color: var(--panel-accent);
-            border-radius: 12px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 140px;
-            border: 1px solid #243149;
-            position: relative;
-        }
-
-        .diagram-label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            position: absolute;
-            top: 10px;
-            left: 12px;
-        }
-
-        .instruction-banner {
-            border-left: 3px solid var(--accent-green);
-            background-color: rgba(204, 255, 0, 0.04);
-            padding: 12px 14px;
-            border-radius: 0 8px 8px 0;
-            font-size: 0.8rem;
-            line-height: 1.4;
-            color: var(--text-main);
-            font-weight: 500;
-            min-height: 52px;
-        }
-
-        .grid-panel {
-            background-color: var(--panel-bg);
-            border-radius: 16px;
-            padding: 16px;
-            border: 1px solid #1f293d;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .panel-header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .panel-section-title {
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: var(--text-main);
-        }
-
-        .suggested-badge {
-            background-color: var(--accent-green);
-            color: #000;
-            font-size: 0.65rem;
-            font-weight: 800;
-            padding: 3px 8px;
-            border-radius: 6px;
-            letter-spacing: 0.05em;
-        }
-
-        .options-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-
-        .option-btn {
-            background-color: var(--panel-accent);
-            border: 1px solid #243149;
-            color: var(--text-main);
-            border-radius: 10px;
-            padding: 12px 6px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .option-btn.active {
-            border-color: var(--accent-blue);
-            background-color: rgba(59, 130, 246, 0.1);
-        }
-
-        .balls-inventory {
-            background-color: var(--panel-accent);
-            border-radius: 12px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            border: 1px solid #243149;
-        }
-
-        .pyramid-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .pyramid-row {
-            display: flex;
-            gap: 6px;
-        }
-
-        .inv-ball {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.65rem;
-            font-weight: 800;
-            color: #000;
-            cursor: pointer;
-            border: 1px solid rgba(0,0,0,0.4);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            position: relative;
-        }
-
-        .inv-ball.selected {
-            outline: 2px solid var(--accent-green);
-            outline-offset: 2px;
-        }
-
-        .role-selector-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .role-btn {
-            background-color: var(--panel-accent);
-            border: 1px solid #243149;
-            color: var(--text-muted);
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 0.82rem;
-            font-weight: 700;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .role-btn.active {
-            border-color: var(--accent-green);
-            color: var(--text-main);
-            background-color: rgba(204, 255, 0, 0.05);
-        }
-
-        .role-desc {
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            line-height: 1.4;
-            padding: 0 4px;
-        }
-
-        .delete-overlay-btn {
-            cursor: pointer;
-        }
-
-        @media (min-width: 501px) {
-            body {
-                position: relative;
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <header>
-        <h1>Shot Caller</h1>
-        <button class="reset-btn" id="global-reset-btn">Reset</button>
-    </header>
-
-    <div class="app-container">
-        <!-- Pool Table Planning View Component -->
-        <div class="table-card">
-            <div class="table-aspect-box">
-                <svg id="pool-table-svg" viewBox="0 0 800 400">
-                    <defs>
-                        <radialGradient id="cloth-grad" cx="50%" cy="50%" r="70%">
-                            <stop offset="0%" stop-color="#1e5442" />
-                            <stop offset="100%" stop-color="#12362a" />
-                        </radialGradient>
-                        <radialGradient id="pocket-grad" cx="50%" cy="50%" r="50%">
-                            <stop offset="75%" stop-color="#050608" />
-                            <stop offset="100%" stop-color="#151922" />
-                        </radialGradient>
-                        <filter id="shadow" x="-20%" y="-20%" width="150%" height="150%">
-                            <feDropShadow dx="2" dy="4" stdDeviation="3" flood-opacity="0.5"/>
-                        </filter>
 
 Cue-ball path
 Object-ball path
@@ -414,10 +338,8 @@ Blocking Ball
 Target Ball: The ball you are trying to pocket. Click on the table surface to place the currently selected ball configuration.
 
 
-// Engine Configuration Variables & Geometry Specs
 const BALL_RADIUS = 11.25;
 const POCKET_RADIUS = 21.0;
-// Exact pocket coordinate locations mapping out mathematically true pocket targets
 const pockets = [
 { id: 'top-left', x: 0, y: 0, name: 'Left Corner' },
 { id: 'top-center', x: 400, y: -2, name: 'Top Side' },
@@ -426,18 +348,16 @@ const pockets = [
 { id: 'bottom-center', x: 400, y: 402, name: 'Bottom Side' },
 { id: 'bottom-right', x: 800, y: 400, name: 'Right Corner' }
 ];
-// Standard dynamic color reference tables mapping ball identifiers to pool ball styles
 const ballColorMapping = {
 1: '#facc15', 2: '#2563eb', 3: '#dc2626', 4: '#7c3aed',
 5: '#f97316', 6: '#16a34a', 7: '#991b1b', 8: '#111827',
 9: '#fde047', 10: '#3b82f6', 11: '#ef4444', 12: '#a78bfa',
 13: '#fb923c', 14: '#4ade80', 15: '#b91c1c'
 };
-// Core Application Layout Operations State Object
 let state = {
-shotType: 'Straight', // 'Straight' | 'Bank' | 'Combo'
+shotType: 'Straight',
 activeInventoryBall: 3,
-placementRole: 'target', // 'target' | 'blocking'
+placementRole: 'target',
 selections: {
 cue: 'cue',
 target: 'obj-3',
@@ -451,7 +371,6 @@ balls: [
 ],
 dragState: { active: false, ballId: null, offsetX: 0, offsetY: 0 }
 };
-// Initialize table pocket rendering elements layer nodes
 const pocketsGroup = document.getElementById('pockets-group');
 pockets.forEach(p => {
 const circle = document.createElementNS('w3.org', 'circle');
@@ -470,7 +389,6 @@ calculateShotAndRender();
 });
 pocketsGroup.appendChild(circle);
 });
-// App Initializer Setup Procedures Hook
 document.addEventListener('DOMContentLoaded', () => {
 buildInventoryPyramidUI();
 initEventListeners();
@@ -480,7 +398,6 @@ calculateShotAndRender();
 function buildInventoryPyramidUI() {
 const pyramid = document.getElementById('inventory-pyramid');
 pyramid.innerHTML = '';
-// Traditional 15-Ball Rack distribution row arrangement matrix mapping configuration properties
 const structuralRows = [,
 ,
 ,
@@ -499,7 +416,6 @@ if(num === 8 || num === 4 || num === 7 || num === 11 || num === 12 || num === 15
 el.style.color = '#fff';
 }
 if(num > 8) {
-// Render stripe presentation layout accent frames
 el.style.background = linear-gradient(to bottom, #ffffff 20%, ${ballColorMapping[num]} 20%, ${ballColorMapping[num]} 80%, #ffffff 80%);
 el.style.color = '#000';
 }
@@ -517,7 +433,6 @@ pyramid.appendChild(rowDiv);
 });
 }
 function initEventListeners() {
-// Shot Option Filter Controls Hooks
 document.querySelectorAll('#shot-type-grid .option-btn').forEach(btn => {
 btn.addEventListener('click', (e) => {
 document.querySelectorAll('#shot-type-grid .option-btn').forEach(b => b.classList.remove('active'));
@@ -526,7 +441,6 @@ state.shotType = e.target.dataset.type;
 calculateShotAndRender();
 });
 });
-// Target Pocket Layout Controls Selector Row Hooks
 document.querySelectorAll('#pockets-selection-grid .option-btn').forEach(btn => {
 btn.addEventListener('click', (e) => {
 state.selections.pocket = e.target.dataset.pocket;
@@ -534,7 +448,6 @@ syncControlsToState();
 calculateShotAndRender();
 });
 });
-// Interactive Placement Role Strategy Selectors Hooks
 document.querySelectorAll('.role-btn').forEach(btn => {
 btn.addEventListener('click', (e) => {
 document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
@@ -548,7 +461,6 @@ desc.innerHTML = <strong>Blocking Ball:</strong> An obstacle ball placement repr
 }
 });
 });
-// Canvas Surface Click Hook to Spawn New Configurations Contextually
 const tableSvg = document.getElementById('pool-table-svg');
 tableSvg.addEventListener('pointerdown', (e) => {
 if(e.target.id === 'pool-table-svg' || e.target.id === 'cloth-grad' || e.target.tagName === 'rect') {
@@ -609,7 +521,6 @@ if(id === 'cue') return;
 state.balls = state.balls.filter(b => b.id !== id);
 calculateShotAndRender();
 }
-// Geometric Math Vector Math Support Blocks
 function getVectorLength(v) { return Math.sqrt(v.x * v.x + v.y * v.y); }
 function normalizeVector(v) {
 const len = getVectorLength(v);
@@ -640,7 +551,6 @@ return b;
 }
 return null;
 }
-// Processing Mechanics Global Rendering Loop pipeline execution routines
 function calculateShotAndRender() {
 const pathsLayer = document.getElementById('paths-layer');
 pathsLayer.innerHTML = '';
@@ -837,4 +747,29 @@ if (!state.dragState.active) return;
 try { document.getElementById('pool-table-svg').releasePointerCapture(e.pointerId); } catch(err) {}
 state.dragState.active = false;
 }
+function drawSvgLine(layer, x1, y1, x2, y2, color, width, dash = 'none') {
+const line = document.createElementNS('w3.org', 'line');
+line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+line.setAttribute('stroke', color); line.setAttribute('stroke-width', width);
+if (dash !== 'none') line.setAttribute('stroke-dasharray', dash);
+line.setAttribute('stroke-linecap', 'round');
+layer.appendChild(line);
+return line;
+}
+function drawSvgCircle(layer, cx, cy, r, fill, stroke, strokeWidth, opacity = '1') {
+const circle = document.createElementNS('w3.org', 'circle');
+circle.setAttribute('cx', cx); circle.setAttribute('cy', cy); circle.setAttribute('r', r);
+circle.setAttribute('fill', fill);
+if (stroke !== 'none') {
+circle.setAttribute('stroke', stroke);
+circle.setAttribute('stroke-width', strokeWidth);
+}
+if (opacity !== '1') circle.setAttribute('opacity', opacity);
+layer.appendChild(circle);
+return circle;
+}
 function varCSS(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+
+
