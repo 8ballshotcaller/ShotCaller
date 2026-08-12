@@ -123,6 +123,7 @@ button{
   height:100%;
   display:block;
   touch-action:none;
+  border-radius:11px;
 }
 
 .side{
@@ -187,19 +188,6 @@ button{
   border-color:rgba(255,255,255,.28);
 }
 
-.section-action:active{
-  transform:translateY(1px);
-}
-
-.section-action.active{
-  background:var(--lime);
-  border-color:var(--lime);
-  color:#10150b;
-  box-shadow:
-    0 0 0 1px rgba(217,255,63,.15),
-    0 2px 7px rgba(217,255,63,.12);
-}
-
 .where-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -237,6 +225,8 @@ button{
   width:100%;
   aspect-ratio:1;
   display:block;
+  background:linear-gradient(#101517,#081012);
+  border-radius:8px;
 }
 
 .combo-only{
@@ -393,6 +383,7 @@ button{
   font-size:9px;
   font-weight:950;
   color:#111;
+  background:#fff;
 }
 
 .rack-ball.stripe{
@@ -821,84 +812,77 @@ button{
 <script>
 "use strict";
 
-/*
-  Completed index.html script:
-  - Uses a single source-of-truth `shot` object to render the three enlarged balls
-    (cue, object, target) and to generate the textual instruction.
-  - The textual instruction is derived from the same computed values used by the visuals,
-    ensuring the description and enlarged balls always match.
-  - Simple click interactions are provided to toggle English on the cue ball and cycle
-    object contact (top/center/bottom) so you can see the description update in real time.
-*/
+/* -----------------------------------------------------------
+   Lightweight, self-contained implementation that:
+   - Restores the table drawing
+   - Restores the rack UI and ball ownership
+   - Restores the three enlarged ball views
+   - Ensures the textual instruction is computed from the same shot object
+   - Provides simple interactions: toggle English, cycle object contact,
+     select rack balls and assign roles, move cue/object by dragging on table
+   ----------------------------------------------------------- */
 
 /* -----------------------
-   Utilities & constants
+   Constants & ball set
    ----------------------- */
-
 const DPR = Math.min(window.devicePixelRatio || 1, 2);
-const BALL_CANVAS_SIZE = 220; // CSS pixels for the square view
 
-function dprSize(n) {
-  return Math.round(n * DPR);
-}
+const TABLE_W = 100; // physical units
+const TABLE_H = 50;
+const BALL_DIAMETER = 2.25;
+const BALL_RADIUS = BALL_DIAMETER / 2;
 
-function clamp(n, a, b) {
-  return Math.max(a, Math.min(b, n));
-}
+const POCKET_SIZE = 4.55;
+const POCKETS = [
+  { id: "TL", name: "Top Left Corner", x: 0, y: 0, type: "corner" },
+  { id: "TM", name: "Top Side", x: 50, y: 0, type: "side" },
+  { id: "TR", name: "Top Right Corner", x: 100, y: 0, type: "corner" },
+  { id: "BL", name: "Bottom Left Corner", x: 0, y: 50, type: "corner" },
+  { id: "BM", name: "Bottom Side", x: 50, y: 50, type: "side" },
+  { id: "BR", name: "Bottom Right Corner", x: 100, y: 50, type: "corner" }
+];
+
+const BALLS = [
+  { n: 1, type: "solid", color: "#f4c51d" },
+  { n: 2, type: "solid", color: "#2867c7" },
+  { n: 3, type: "solid", color: "#d9343e" },
+  { n: 4, type: "solid", color: "#6d3c9b" },
+  { n: 5, type: "solid", color: "#ed701c" },
+  { n: 6, type: "solid", color: "#16884e" },
+  { n: 7, type: "solid", color: "#8e1725" },
+  { n: 8, type: "solid", color: "#151515" },
+  { n: 9, type: "stripe", color: "#f4c51d" },
+  { n: 10, type: "stripe", color: "#2867c7" },
+  { n: 11, type: "stripe", color: "#d9343e" },
+  { n: 12, type: "stripe", color: "#6d3c9b" },
+  { n: 13, type: "stripe", color: "#ed701c" },
+  { n: 14, type: "stripe", color: "#16884e" },
+  { n: 15, type: "stripe", color: "#8e1725" }
+];
+const BALL_MAP = Object.fromEntries(BALLS.map(b => [b.n, b]));
 
 /* -----------------------
-   Single source-of-truth shot object
-   - cue.spin: "top" | "bottom" | "none" (preferred)
-   - cue.english: "left" | "right" | "none"
-   - cue.contact: optional "top" | "center" | "bottom" (if spin not provided)
-   - object.contact: "top" | "center" | "bottom"
+   Application state (single source-of-truth for visuals + text)
    ----------------------- */
-
 const shot = {
-  cue: {
-    // Example: top spin, no English (this is the canonical data for both visuals and text)
-    spin: "top",         // "top" | "bottom" | "none"
-    english: "none",     // "left" | "right" | "none"
-    contact: null        // optional contact override (not used in this example)
-  },
-  object: {
-    contact: "top"       // "top" | "center" | "bottom"
-  },
-  // optional properties for UI
+  cue: { x: 22, y: 34, spin: "top", english: "none", contact: null },
+  object: { x: 65, y: 20, number: 3, contact: "top" },
+  targetPocket: "TR",
   type: "cut",
-  pocket: "Top Right Corner",
+  pocketName: "Top Right Corner",
   rail: "none",
   speed: "medium"
 };
 
-/* -----------------------
-   Label helpers (shared by visuals + text)
-   ----------------------- */
-
-function contactToSpin(contact) {
-  if (!contact) return "none";
-  const c = String(contact).toLowerCase();
-  if (c === "top" || c === "topside" || c === "top-side") return "top";
-  if (c === "bottom" || c === "bottomside" || c === "bottom-side") return "bottom";
-  return "none";
-}
-
-function mapSpinLabel(spin) {
-  if (!spin || spin === "none") return "no spin";
-  if (spin === "top") return "top spin";
-  if (spin === "bottom") return "backspin";
-  return `${spin} spin`;
-}
-
-function mapEnglishLabel(e) {
-  if (!e || e === "none") return "no English";
-  return `${e} English`;
-}
+const tableBalls = [
+  { number: 3, x: 65, y: 20, role: "object", owner: "target" },
+  { number: 1, x: 70, y: 30, role: "rack", owner: "my" }
+];
 
 /* -----------------------
-   DOM references
+   DOM refs
    ----------------------- */
-
+const tableCanvas = document.getElementById("table");
 const cueCanvas = document.getElementById("cueView");
 const objectCanvas = document.getElementById("objectView");
 const targetCanvas = document.getElementById("targetView");
@@ -907,45 +891,198 @@ const shotTypeEl = document.getElementById("shotType");
 const shotPocketEl = document.getElementById("shotPocket");
 const shotRailEl = document.getElementById("shotRail");
 const shotSpeedEl = document.getElementById("shotSpeed");
+const rackEl = document.getElementById("rack");
+const whereBallEl = document.getElementById("whereBall");
+const ownershipButtons = document.getElementById("ownershipButtons");
 const resetBtn = document.getElementById("reset");
 
 /* -----------------------
-   Canvas setup / drawing helpers
+   Canvas helpers
+   ----------------------- */
+function resizeCanvasToDisplaySize(canvas) {
+  const rect = canvas.getBoundingClientRect();
+  const width = Math.max(2, Math.round(rect.width));
+  const height = Math.max(2, Math.round(rect.height));
+  // scale for DPR
+  const scaledW = Math.round(width * DPR);
+  const scaledH = Math.round(height * DPR);
+  if (canvas.width !== scaledW || canvas.height !== scaledH) {
+    canvas.width = scaledW;
+    canvas.height = scaledH;
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    return true;
+  }
+  return false;
+}
+
+function clear(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+}
+
+/* -----------------------
+   Table rendering (pockets + balls + guides)
+   ----------------------- */
+function renderTable() {
+  resizeCanvasToDisplaySize(tableCanvas);
+  const ctx = tableCanvas.getContext("2d");
+  const cssW = tableCanvas.clientWidth;
+  const cssH = tableCanvas.clientHeight;
+  clear(ctx, cssW, cssH);
+
+  // Background felt
+  const pad = 8;
+  const tblX = pad;
+  const tblY = pad;
+  const tblW = cssW - pad * 2;
+  const tblH = cssH - pad * 2;
+  // green gradient
+  const g = ctx.createLinearGradient(0, tblY, 0, tblY + tblH);
+  g.addColorStop(0, "#0f3f2f");
+  g.addColorStop(1, "#0b2b22");
+  ctx.fillStyle = g;
+  roundRectFill(ctx, tblX, tblY, tblW, tblH, 12);
+  // rails (dark)
+  ctx.strokeStyle = "#062317";
+  ctx.lineWidth = 6;
+  ctx.strokeRect(tblX, tblY, tblW, tblH);
+
+  // helper: map physical units to table pixels
+  function toPx(p) {
+    return {
+      x: tblX + (p.x / TABLE_W) * tblW,
+      y: tblY + (p.y / TABLE_H) * tblH
+    };
+  }
+
+  // pockets
+  POCKETS.forEach(p => {
+    const pos = toPx({ x: p.x, y: p.y });
+    const r = (POCKET_SIZE / TABLE_W) * tblW * 0.7;
+    ctx.beginPath();
+    ctx.fillStyle = "rgba(10,10,10,0.95)";
+    ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "#111";
+    ctx.stroke();
+  });
+
+  // draw table balls (cue & object)
+  // cue
+  drawTableBall(ctx, toPx({ x: shot.cue.x, y: shot.cue.y }), BALL_DIAMETER, "#ffffff", "Cue");
+  // object ball
+  const objBall = BALL_MAP[shot.object.number] || { color: "#ddd" };
+  drawTableBall(ctx, toPx({ x: shot.object.x, y: shot.object.y }), BALL_DIAMETER, objBall.color, String(shot.object.number));
+
+  // additional balls in tableBalls
+  tableBalls.forEach(b => {
+    if (b.role === "object" && b.number === shot.object.number) return;
+    const color = (BALL_MAP[b.number] && BALL_MAP[b.number].color) || "#ccc";
+    drawTableBall(ctx, toPx({ x: b.x, y: b.y }), BALL_DIAMETER, color, String(b.number));
+  });
+
+  // contact projection helper lines (simple demo)
+  // draw line from cue to object
+  ctx.beginPath();
+  const cuePx = toPx({ x: shot.cue.x, y: shot.cue.y });
+  const objPx = toPx({ x: shot.object.x, y: shot.object.y });
+  ctx.moveTo(cuePx.x, cuePx.y);
+  ctx.lineTo(objPx.x, objPx.y);
+  ctx.strokeStyle = "rgba(255,255,255,0.06)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function roundRectFill(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawTableBall(ctx, pos, diameter, color, label) {
+  const r = (diameter / TABLE_W) * (tableCanvas.clientWidth - 16) * 0.5 * 0.01;
+  // nicer radius: based on CSS scaling (approx)
+  const pxR = Math.max(8, (diameter / TABLE_W) * tableCanvas.clientWidth * 0.02 * 5);
+  // shading
+  const grad = ctx.createRadialGradient(pos.x - pxR * 0.35, pos.y - pxR * 0.45, pxR * 0.05, pos.x, pos.y, pxR);
+  grad.addColorStop(0, "#fff");
+  grad.addColorStop(0.6, color);
+  grad.addColorStop(1, darken(color, 0.12));
+  ctx.beginPath();
+  ctx.fillStyle = grad;
+  ctx.arc(pos.x, pos.y, pxR, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = "rgba(0,0,0,0.6)";
+  ctx.stroke();
+
+  // number badge
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(pos.x + pxR * 0.25, pos.y + pxR * 0.25, pxR * 0.34, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#111";
+  ctx.font = `${Math.max(10, Math.round(pxR * 0.6))}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(label, pos.x + pxR * 0.25, pos.y + pxR * 0.25);
+}
+
+/* -----------------------
+   Small color helpers
+   ----------------------- */
+function darken(hex, amt) {
+  // hex format #rrggbb
+  const c = hex.replace("#", "");
+  const num = parseInt(c, 16);
+  let r = (num >> 16) - Math.round(255 * amt);
+  let g = ((num >> 8) & 0xff) - Math.round(255 * amt);
+  let b = (num & 0xff) - Math.round(255 * amt);
+  r = clamp(Math.round(r), 0, 255);
+  g = clamp(Math.round(g), 0, 255);
+  b = clamp(Math.round(b), 0, 255);
+  return `rgb(${r},${g},${b})`;
+}
+function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+
+/* -----------------------
+   Enlarged ball views (cue/object/target)
+   - These use the same shot object values for spin/english/contact
    ----------------------- */
 
-function setupCanvas(canvas) {
-  // Set CSS size
+const BALL_VIEW_SIZE = 220;
+
+function setupBallCanvas(canvas) {
   canvas.style.width = "100%";
   canvas.style.height = "100%";
-  // Determine square pixel size based on computed CSS size (we want square)
-  const rect = canvas.getBoundingClientRect();
-  const cssSize = Math.min(rect.width, rect.height) || BALL_CANVAS_SIZE;
-  // Use fixed logical size for clarity so drawings look consistent
-  canvas.width = dprSize(BALL_CANVAS_SIZE);
-  canvas.height = dprSize(BALL_CANVAS_SIZE);
-  canvas.style.width = cssSize + "px";
-  canvas.style.height = cssSize + "px";
+  // logical size
+  canvas.width = Math.round(BALL_VIEW_SIZE * DPR);
+  canvas.height = Math.round(BALL_VIEW_SIZE * DPR);
+  canvas.style.width = BALL_VIEW_SIZE + "px";
+  canvas.style.height = BALL_VIEW_SIZE + "px";
   const ctx = canvas.getContext("2d");
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   return ctx;
 }
 
-function clearCanvas(ctx, size) {
-  ctx.clearRect(0, 0, size, size);
-}
-
-function drawBallView(ctx, sizePx, { contact = "center", spin = "none", english = "none", title = "" }) {
-  // sizePx is logical pixels (CSS px), ctx already scaled for DPR
+function drawBallView(ctx, sizePx, { contact = "center", spin = "none", english = "none", title = "", color = "#fff", number = "" }) {
   const S = sizePx;
   const center = S / 2;
   const r = Math.round(S * 0.42);
-  // background
-  clearCanvas(ctx, S);
   // ball shading
+  ctx.clearRect(0, 0, S, S);
   const grad = ctx.createRadialGradient(center - r * 0.35, center - r * 0.45, r * 0.05, center, center, r);
-  grad.addColorStop(0, "#ffffff");
-  grad.addColorStop(0.5, "#e6e6e6");
-  grad.addColorStop(1, "#cfcfcf");
+  grad.addColorStop(0, "#fff");
+  grad.addColorStop(0.55, color);
+  grad.addColorStop(1, darken(color, 0.12));
   ctx.beginPath();
   ctx.fillStyle = grad;
   ctx.arc(center, center, r, 0, Math.PI * 2);
@@ -954,14 +1091,11 @@ function drawBallView(ctx, sizePx, { contact = "center", spin = "none", english 
   ctx.strokeStyle = "#666";
   ctx.stroke();
 
-  // determine contact marker position
+  // contact marker
   const contactOffset = r * 0.6;
   let contactY = center;
   if (contact === "top") contactY = center - contactOffset;
   else if (contact === "bottom") contactY = center + contactOffset;
-  else contactY = center;
-
-  // contact marker
   ctx.beginPath();
   ctx.fillStyle = "#e53935";
   ctx.strokeStyle = "#a00000";
@@ -970,7 +1104,7 @@ function drawBallView(ctx, sizePx, { contact = "center", spin = "none", english 
   ctx.fill();
   ctx.stroke();
 
-  // english arrow (left/right)
+  // english arrow
   if (english && english !== "none") {
     const arrowX = english === "left" ? center - r * 0.55 : center + r * 0.55;
     const arrowLen = r * 0.4;
@@ -982,73 +1116,76 @@ function drawBallView(ctx, sizePx, { contact = "center", spin = "none", english 
     ctx.moveTo(arrowX, center - arrowLen / 2);
     ctx.lineTo(arrowX, center + arrowLen / 2);
     ctx.stroke();
-    // triangle (arrowhead)
     ctx.beginPath();
     if (english === "left") {
       ctx.moveTo(arrowX - 10, center);
-      ctx.lineTo(arrowX + 6, center - 8);
-      ctx.lineTo(arrowX + 6, center + 8);
+      ctx.lineTo(arrowX + 4, center - 8);
+      ctx.lineTo(arrowX + 4, center + 8);
     } else {
       ctx.moveTo(arrowX + 10, center);
-      ctx.lineTo(arrowX - 6, center - 8);
-      ctx.lineTo(arrowX - 6, center + 8);
+      ctx.lineTo(arrowX - 4, center - 8);
+      ctx.lineTo(arrowX - 4, center + 8);
     }
     ctx.closePath();
     ctx.fill();
   }
 
-  // small descriptive labels (spin/english) to make it clear visually
-  ctx.fillStyle = "#111";
-  ctx.font = `${Math.round(S * 0.06)}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
-  ctx.textBaseline = "bottom";
+  // small label
+  ctx.fillStyle = "#dfe6ea";
+  ctx.font = `${Math.round(S * 0.055)}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+  ctx.textAlign = "left";
+  ctx.fillText(title, 10, 22);
+
+  // number badge for colored balls
+  if (number) {
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(center + r * 0.3, center + r * 0.35, r * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#111";
+    ctx.font = `${Math.round(S * 0.06)}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(number, center + r * 0.3, center + r * 0.35);
+  }
+
+  // info pill
+  ctx.fillStyle = "rgba(255,255,255,0.92)";
   const spinLabel = mapSpinLabel(spin);
   const englishLabel = english && english !== "none" ? mapEnglishLabel(english) : "no English";
   const text = `${spinLabel} • ${englishLabel}`;
-  // draw a pill for text for readability
-  const padding = 8;
-  const textWidth = Math.min(S * 0.86, ctx.measureText(text).width + padding * 2);
-  const pillW = Math.round(textWidth);
+  ctx.font = `${Math.round(S * 0.055)}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+  const textW = Math.min(S * 0.86, ctx.measureText(text).width + 24);
   const pillH = Math.round(S * 0.12);
-  ctx.fillStyle = "rgba(255,255,255,0.92)";
-  roundRect(ctx, (S - pillW) / 2, S - pillH - 8, pillW, pillH, pillH / 2);
+  roundRectFill(ctx, (S - textW) / 2, S - pillH - 8, textW, pillH, pillH / 2);
   ctx.fillStyle = "#101214";
   ctx.font = `${Math.round(S * 0.055)}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
   ctx.textAlign = "center";
   ctx.fillText(text, center, S - 12);
-
-  // title label
-  if (title) {
-    ctx.fillStyle = "#dfe6ea";
-    ctx.font = `${Math.round(S * 0.055)}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
-    ctx.textAlign = "left";
-    ctx.fillText(title, 10, 22);
-  }
-
-  // small legend: contact dot explanation (for clarity)
-  ctx.fillStyle = "#aeb7bd";
-  ctx.font = `${Math.round(S * 0.04)}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
-  ctx.textAlign = "left";
-  ctx.fillText("Red dot = contact point", 10, S - 36);
 }
 
-function roundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
+function mapSpinLabel(spin) {
+  if (!spin || spin === "none") return "no spin";
+  if (spin === "top") return "top spin";
+  if (spin === "bottom") return "backspin";
+  return `${spin} spin`;
+}
+function mapEnglishLabel(e) {
+  if (!e || e === "none") return "no English";
+  return `${e} English`;
+}
+function contactToSpin(contact) {
+  if (!contact) return "none";
+  const c = String(contact).toLowerCase();
+  if (c === "top" || c === "topside" || c === "top-side") return "top";
+  if (c === "bottom" || c === "bottomside" || c === "bottom-side") return "bottom";
+  return "none";
 }
 
 /* -----------------------
-   Description generation (single source-of-truth)
-   - Uses the same computed values used to render the visuals.
-   - Produces clear, unambiguous phrasing and avoids "top side".
+   Textual instruction generation (same computed values used by visuals)
    ----------------------- */
-
-function generateDescriptionFromShot(shot) {
-  // Normalize values: prefer explicit spin if provided, otherwise infer from contact
+function generateDescription() {
   const cueSpin = shot.cue.spin ?? contactToSpin(shot.cue.contact);
   const cueEnglish = shot.cue.english ?? "none";
   const objectContact = shot.object.contact ?? "center";
@@ -1068,80 +1205,135 @@ function generateDescriptionFromShot(shot) {
     contactPhrase = `contact the object ball at the ${objectContact}`;
   }
 
-  // Combine into a single, precise instruction sentence (no contradictions)
-  return `${cueSpinPhrase} ${cueEnglishPhrase}. ${contactPhrase}. Aim the object ball so it travels toward the target pocket.`;
+  return `${cueSpinPhrase} ${cueEnglishPhrase}. ${contactPhrase}. Aim the object ball so it travels toward the ${shot.pocketName || "selected pocket"}.`;
 }
 
 /* -----------------------
-   Render pipeline
+   Render pipeline for side panels
    ----------------------- */
-
-function renderAll() {
-  renderStats();
-  renderBalls();
-  renderInstruction();
-}
-
-function renderStats() {
-  shotTypeEl.textContent = shot.type ?? "—";
-  shotPocketEl.textContent = shot.pocket ?? "—";
-  shotRailEl.textContent = shot.rail ?? "—";
-  shotSpeedEl.textContent = shot.speed ?? "—";
-}
-
-function renderBalls() {
-  // cue
-  const ctxCue = setupCanvas(cueCanvas);
-  const cueSpin = shot.cue.spin ?? contactToSpin(shot.cue.contact);
-  const cueEnglish = shot.cue.english ?? "none";
-  const cueContact = shot.cue.contact ?? "center";
-  drawBallView(ctxCue, BALL_CANVAS_SIZE, {
-    contact: cueContact,
-    spin: cueSpin,
-    english: cueEnglish,
-    title: "Cue Ball"
+function renderBallViews() {
+  const ctxCue = setupBallCanvas(cueCanvas);
+  drawBallView(ctxCue, BALL_VIEW_SIZE, {
+    contact: shot.cue.contact ?? "center",
+    spin: shot.cue.spin ?? contactToSpin(shot.cue.contact),
+    english: shot.cue.english ?? "none",
+    title: "Cue Ball",
+    color: "#ffffff",
+    number: ""
   });
 
-  // object
-  const ctxObj = setupCanvas(objectCanvas);
-  const objContact = shot.object.contact ?? "center";
-  const objSpin = shot.object.spin ?? contactToSpin(objContact);
-  drawBallView(ctxObj, BALL_CANVAS_SIZE, {
-    contact: objContact,
-    spin: objSpin,
+  const ctxObj = setupBallCanvas(objectCanvas);
+  const objColor = (BALL_MAP[shot.object.number] && BALL_MAP[shot.object.number].color) || "#ddd";
+  drawBallView(ctxObj, BALL_VIEW_SIZE, {
+    contact: shot.object.contact ?? "center",
+    spin: shot.object.spin ?? contactToSpin(shot.object.contact),
     english: "none",
-    title: "Object Ball"
+    title: "Object Ball",
+    color: objColor,
+    number: String(shot.object.number)
   });
 
-  // target (keeps center / no spin)
-  const ctxTarget = setupCanvas(targetCanvas);
-  drawBallView(ctxTarget, BALL_CANVAS_SIZE, {
+  const ctxTarget = setupBallCanvas(targetCanvas);
+  drawBallView(ctxTarget, BALL_VIEW_SIZE, {
     contact: "center",
     spin: "none",
     english: "none",
-    title: "Target Ball"
+    title: "Target Ball",
+    color: "#bbbbbb",
+    number: ""
   });
 }
 
-function renderInstruction() {
-  const description = generateDescriptionFromShot(shot);
-  instructionEl.textContent = description;
+function renderInstructionAndStats() {
+  instructionEl.textContent = generateDescription();
+  shotTypeEl.textContent = shot.type || "—";
+  shotPocketEl.textContent = shot.pocketName || "—";
+  shotRailEl.textContent = shot.rail || "—";
+  shotSpeedEl.textContent = shot.speed || "—";
+  whereBallEl.textContent = `Object #${shot.object.number}`;
 }
 
 /* -----------------------
-   Interactions: keep visuals and text derived from same shot object
-   - Click cue canvas to toggle English: none -> right -> left -> none
-   - Click object canvas to cycle contact: top -> center -> bottom -> top
-   - Reset button restores canonical values
+   Rack rendering & ownership buttons
    ----------------------- */
+function renderRack() {
+  rackEl.innerHTML = "";
+  // simple static rack layout for display using rows
+  const rows = [
+    [1],
+    [2, 3],
+    [4, 5, 6],
+    [7, 8, 9, 10],
+    [11, 12, 13, 14, 15]
+  ];
+  rows.forEach((row, idx) => {
+    const rowEl = document.createElement("div");
+    rowEl.className = `rack-row r${idx + 1}`;
+    row.forEach(n => {
+      const b = BALL_MAP[n];
+      const ballEl = document.createElement("button");
+      ballEl.className = `rack-ball ${b.type === "stripe" ? "stripe" : "solid"}`;
+      ballEl.style.setProperty("--ball-color", b.color);
+      // inner span shows white circle for number
+      const span = document.createElement("span");
+      span.textContent = String(n);
+      ballEl.appendChild(span);
+      // find if this ball has a role in our tableBalls
+      const onTable = tableBalls.find(tb => tb.number === n);
+      if (onTable) ballEl.classList.add("on-table");
+      if (shot.object.number === n) ballEl.classList.add("object-ball");
+      // click to select
+      ballEl.addEventListener("click", () => {
+        // highlight selection
+        rackEl.querySelectorAll(".rack-ball").forEach(rb => rb.classList.remove("selected"));
+        ballEl.classList.add("selected");
+        // set selected to be assigned by ownership buttons
+        rackEl.dataset.selected = String(n);
+      });
+      rowEl.appendChild(ballEl);
+    });
+    rackEl.appendChild(rowEl);
+  });
+}
 
+// ownership button behavior: assign selected rack ball role
+ownershipButtons.addEventListener("click", (ev) => {
+  const btn = ev.target.closest("button.ownership-button");
+  if (!btn) return;
+  const owner = btn.dataset.owner; // "target" | "my" | "opponent"
+  const selected = rackEl.dataset.selected;
+  if (!selected) return;
+  const num = Number(selected);
+  // if assigning target, set shot.object.number and mark on table
+  if (owner === "target") {
+    shot.object.number = num;
+    // If the ball was not already a table ball, push a default position
+    if (!tableBalls.find(tb => tb.number === num)) {
+      tableBalls.push({ number: num, x: shot.object.x + 4, y: shot.object.y + 2, role: "object", owner: "target" });
+    } else {
+      tableBalls.forEach(tb => { if (tb.number === num) tb.owner = "target"; });
+    }
+  } else {
+    // mark ownership on tableBalls or add as off-table marker
+    const existing = tableBalls.find(tb => tb.number === num);
+    if (existing) existing.owner = owner === "my" ? "my" : "opponent";
+    else tableBalls.push({ number: num, x: shot.object.x + 4, y: shot.object.y + 2, role: "rack", owner });
+  }
+  // clear selection highlight
+  rackEl.querySelectorAll(".rack-ball").forEach(rb => rb.classList.remove("selected"));
+  delete rackEl.dataset.selected;
+  renderAll();
+});
+
+/* -----------------------
+   Interactions: toggle english, cycle object contact, drag cue/object on table
+   ----------------------- */
 function nextEnglish(current) {
   if (!current || current === "none") return "right";
   if (current === "right") return "left";
   if (current === "left") return "none";
   return "none";
 }
-
 function nextContact(current) {
   if (!current || current === "center") return "top";
   if (current === "top") return "bottom";
@@ -1151,53 +1343,112 @@ function nextContact(current) {
 
 cueCanvas.addEventListener("click", () => {
   shot.cue.english = nextEnglish(shot.cue.english);
-  // Keep description in sync with the same object used to draw the cue canvas
   renderAll();
 });
 
 objectCanvas.addEventListener("click", () => {
   shot.object.contact = nextContact(shot.object.contact);
-  // Optionally, if shot.object.spin is set, keep it in sync or clear it to derive from contact
+  // keep object.spin derived from contact (no contradiction)
   delete shot.object.spin;
   renderAll();
 });
 
+/* Dragging on table: choose whether dragging cue or object depends proximity */
+let dragging = null;
+let dragOffset = { x: 0, y: 0 };
+
+tableCanvas.addEventListener("pointerdown", (ev) => {
+  ev.preventDefault();
+  const rect = tableCanvas.getBoundingClientRect();
+  const x = ((ev.clientX - rect.left) / rect.width) * TABLE_W;
+  const y = ((ev.clientY - rect.top) / rect.height) * TABLE_H;
+  // choose nearest of cue or object
+  const dCue = distance(x, y, shot.cue.x, shot.cue.y);
+  const dObject = distance(x, y, shot.object.x, shot.object.y);
+  if (dCue < dObject && dCue < 6) {
+    dragging = "cue";
+    dragOffset.x = shot.cue.x - x;
+    dragOffset.y = shot.cue.y - y;
+  } else if (dObject < 6) {
+    dragging = "object";
+    dragOffset.x = shot.object.x - x;
+    dragOffset.y = shot.object.y - y;
+  }
+});
+window.addEventListener("pointermove", (ev) => {
+  if (!dragging) return;
+  const rect = tableCanvas.getBoundingClientRect();
+  const x = ((ev.clientX - rect.left) / rect.width) * TABLE_W;
+  const y = ((ev.clientY - rect.top) / rect.height) * TABLE_H;
+  if (dragging === "cue") {
+    shot.cue.x = clamp(x + dragOffset.x, BALL_RADIUS, TABLE_W - BALL_RADIUS);
+    shot.cue.y = clamp(y + dragOffset.y, BALL_RADIUS, TABLE_H - BALL_RADIUS);
+  } else if (dragging === "object") {
+    shot.object.x = clamp(x + dragOffset.x, BALL_RADIUS, TABLE_W - BALL_RADIUS);
+    shot.object.y = clamp(y + dragOffset.y, BALL_RADIUS, TABLE_H - BALL_RADIUS);
+  }
+  renderAll();
+});
+window.addEventListener("pointerup", () => { dragging = null; });
+
+function distance(x1, y1, x2, y2) {
+  return Math.hypot(x1 - x2, y1 - y2);
+}
+
+/* -----------------------
+   Reset button
+   ----------------------- */
 resetBtn.addEventListener("click", () => {
-  // Reset to canonical example values
-  shot.cue.spin = "top";
-  shot.cue.english = "none";
-  shot.cue.contact = null;
-  shot.object.contact = "top";
-  shot.type = "cut";
-  shot.pocket = "Top Right Corner";
-  shot.rail = "none";
-  shot.speed = "medium";
+  shot.cue = { x: 22, y: 34, spin: "top", english: "none", contact: null };
+  shot.object = { x: 65, y: 20, number: 3, contact: "top" };
+  shot.targetPocket = "TR";
+  shot.pocketName = "Top Right Corner";
+  tableBalls.length = 0;
+  tableBalls.push({ number: 3, x: 65, y: 20, role: "object", owner: "target" });
   renderAll();
 });
 
 /* -----------------------
-   Initialize
+   Master render function
    ----------------------- */
+function renderAll() {
+  renderTable();
+  renderBallViews();
+  renderInstructionAndStats();
+  renderRack();
+}
 
+/* -----------------------
+   Init
+   ----------------------- */
 function init() {
-  // ensure canvases have an initial size
-  [cueCanvas, objectCanvas, targetCanvas].forEach((c) => {
-    // Ensure there's a CSS size to read (parent layout is loaded)
-    c.style.width = c.style.width || "100%";
-    c.style.height = c.style.height || "100%";
-  });
-
-  // initial render
+  // place initial tableBalls
+  if (!tableBalls.length) tableBalls.push({ number: 3, x: 65, y: 20, role: "object", owner: "target" });
+  // initial sizes
+  onResize();
   renderAll();
-
-  // re-render on resize for crispness
-  let t;
   window.addEventListener("resize", () => {
-    clearTimeout(t);
-    t = setTimeout(renderAll, 120);
+    onResize();
+    renderAll();
   });
 }
 
+function onResize() {
+  resizeCanvasToDisplaySize(tableCanvas);
+  // ball view canvases respond to CSS 100% sizing so just re-create their contexts
+  [cueCanvas, objectCanvas, targetCanvas].forEach(c => {
+    c.width = Math.round(BALL_VIEW_SIZE * DPR);
+    c.height = Math.round(BALL_VIEW_SIZE * DPR);
+    c.style.width = BALL_VIEW_SIZE + "px";
+    c.style.height = BALL_VIEW_SIZE + "px";
+    const ctx = c.getContext("2d");
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  });
+}
+
+/* -----------------------
+   Start
+   ----------------------- */
 init();
 
 </script>
