@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shot Caller - Pool Shot Planner</title>
+    <style>
+        :root {
+            --bg-color: #0d0f12;
+            --panel-bg: #161a22;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --table-cloth: #1b4d3e;
+            --table-rail: #2d1d10;
+            --table-pocket: #050608;
+            --ball-cue: #ffffff;
+            --ball-target: #dc2626;
+            --ball-combo: #f59e0b;
+            --danger-color: #ef4444;
+            --success-color: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            overflow-y: auto;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--panel-bg);
+            padding: 12px 16px;
+            text-align: center;
+            border-bottom: 1px solid #242b35;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: var(--text-main);
+            text-transform: uppercase;
+        }
+
+        .reset-btn {
+            background-color: #242b35;
+            border: none;
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .reset-btn:active {
+            background-color: #2d3643;
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 8px;
+            gap: 8px;
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+            height: calc(100% - 45px);
+            overflow-y: auto;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            background: #11141a;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: inset 0 4px 20px rgba(0,0,0,0.6);
+            flex-shrink: 0;
+        }
+
+        .table-aspect-ratio-box {
+            width: 100%;
+            position: relative;
+            padding-bottom: 50%; /* 2:1 Ratio */
+            background-color: var(--table-rail);
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        #pool-table-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            overflow: visible;
+            touch-action: none;
+        }
+
+        .controls-panel {
+            background-color: var(--panel-bg);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .tab-group {
+            display: flex;
+            background-color: #0d0f12;
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .tab-btn.active {
+            background-color: var(--accent-color);
+            color: var(--text-main);
+        }
+
+        .interactive-selectors {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .selector-card {
+            background-color: #1c212b;
+            border: 1px solid #2d3643;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .selector-card.active {
+            border-color: var(--accent-color);
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+
+        .selector-card .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+        }
+
+        .selector-card .value {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .selector-card .indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #374151;
+        }
+
+        .selector-card.active .indicator {
+            background-color: var(--accent-color);
+            box-shadow: 0 0 8px var(--accent-color);
+        }
+
+        .add-balls-bar {
+            display: flex;
+            gap: 8px;
+            background-color: #1c212b;
+            padding: 8px;
+            border-radius: 8px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .add-balls-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .add-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .add-btn {
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: #fff;
+        }
+
+        .add-btn.cue { background-color: #4b5563; }
+        .add-btn.object { background-color: var(--ball-target); }
+
+        .shot-guide-box {
+            background-color: #12161f;
+            border-left: 3px solid var(--accent-color);
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 0.78rem;
+            line-height: 1.4;
+            color: var(--text-muted);
+        }
+
+        .shot-status-banner {
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+        }
+
+        .shot-status-banner.error {
+            display: block;
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .shot-status-banner.success {
+            display: block;
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .delete-overlay-btn {
+            cursor: pointer;
+            fill: var(--danger-color);
+            filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.5));
+        }
+
+        @media (min-width: 501px) {
+            body {
+                position: relative;
+                height: 100vh;
+            }
+            .main-container {
+                margin: 20px auto;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Shot Caller</h1>
+        <button class="reset-btn" id="global-reset-btn">Reset Layout</button>
+    </header>
+
+    <div class="main-container">
+        <div class="table-wrapper">
+            <div class="table-aspect-ratio-box">
+                <svg id="pool-table-svg" viewBox="0 0 800 400">
+                    <defs>
+                        <radialGradient id="cloth-grad" cx="50%" cy="50%" r="70%">
+                            <stop offset="0%" stop-color="#225e4c" />
+                            <stop offset="100%" stop-color="#143d31" />
+                        </radialGradient>
+                        <radialGradient id="pocket-grad" cx="50%" cy="50%" r="50%">
+                            <stop offset="70%" stop-color="#050608" />
+                            <stop offset="100%" stop-color="#1b1e24" />
+                        </radialGradient>
+                        <filter id="shadow" x="-20%" y="-20%" width="150%" height="150%">
+                            <feDropShadow dx="2" dy="4" stdDeviation="4" flood-opacity="0.6"/>
+                        </filter>
+                    </defs>
+
+                    <!-- Playing Surface Cloth -->
+                    <rect x="0" y="0" width="800" height="400" fill="url(#cloth-grad)" />
+
+                    <!-- Rails Outside Cushions Frame -->
+                    <rect x="-15" y="-15" width="830" height="430" rx="12" fill="none" stroke="var(--table-rail)" stroke-width="30" />
+                    <rect x="-2" y="-2" width="804" height="404" fill="none" stroke="#1e130b" stroke-width="4" />
+
+                    <!-- Rail Sights (Diamonds) -->
+                    <g fill="#e5e7eb" opacity="0.6">
+                        <circle cx="100" cy="-8" r="2.5" /><circle cx="200" cy="-8" r="2.5" /><circle cx="300" cy="-8" r="2.5" />
