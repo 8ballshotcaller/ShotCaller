@@ -31,6 +31,7 @@ html,
 body{
   margin:0;
   min-height:100%;
+  overflow-y:auto;
   background:
     radial-gradient(
       circle at 50% -10%,
@@ -131,7 +132,8 @@ button{
   width:100%;
   height:100%;
   display:block;
-  touch-action:none;
+  /* Let vertical swipes scroll the page unless a game gesture is active. */
+  touch-action:pan-y;
 }
 
 .side{
@@ -7205,8 +7207,6 @@ canvas.addEventListener(
   "pointerdown",
   event=>{
 
-    event.preventDefault();
-
     const p=
       fromScreen(
         event.clientX,
@@ -7217,6 +7217,7 @@ canvas.addEventListener(
       nearestBall(p);
 
     if(hit){
+      event.preventDefault();
 
       if(
         hit.type==="cue"
@@ -7290,6 +7291,7 @@ canvas.addEventListener(
 
     const pocket=nearestPocket(p);
     if(pocket){
+      event.preventDefault();
       /*
         Tapping the active mouth returns the solver to its
         suggested-pocket search, so there is no second HTML
@@ -7309,6 +7311,8 @@ canvas.addEventListener(
     ){
       return;
     }
+
+    event.preventDefault();
 
     dragPointerId=
       event.pointerId;
