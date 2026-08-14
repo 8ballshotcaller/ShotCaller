@@ -68,20 +68,20 @@ button{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  position:relative;
 }
 
 .table-hint{
   position:absolute;
-  top:50%;
+  top:9px;
   left:50%;
-  width:min(360px,44%);
-  transform:translate(-50%,-50%);
+  width:min(360px,80%);
+  transform:translateX(-50%);
   color:var(--muted);
   font-size:9px;
   line-height:1.25;
   text-align:center;
   pointer-events:none;
+  z-index:1;
 }
 
 .table-hint strong{
@@ -782,10 +782,6 @@ button{
       <div class="brand-name"><span>Shot</span><span>Caller</span></div>
   </div>
 
-  <div class="table-hint" aria-label="How to use">
-    <strong>How to use:</strong> Choose a pocket—or let Shot Caller choose. Tap a ball, then tap the table to reposition it.
-  </div>
-
   <button class="reset" id="reset">
     Reset
   </button>
@@ -796,6 +792,9 @@ button{
 <section class="card table-card">
 
   <div class="table-stage">
+    <div class="table-hint" aria-label="How to use">
+      <strong>How to use:</strong> Choose a pocket—or let Shot Caller choose. Tap a ball, then tap the table to reposition it.
+    </div>
     <canvas id="table"></canvas>
   </div>
 
