@@ -117,7 +117,7 @@ button{
 
 .table-stage{
   width:100%;
-  aspect-ratio:2/1;
+  aspect-ratio:1/2;
   position:relative;
   max-width:100%;
   margin:0 auto;
@@ -749,80 +749,6 @@ button{
       .table-stage { width: 100%; }
       }
     </style>
-    <style id="game-table-visuals">
-      /*
-        Game-table presentation layer.
-        The shot solver remains the source of truth; this layer only
-        changes the responsive canvas presentation and its artwork.
-      */
-      :root {
-        --table-card: #151c1d;
-        --table-card-edge: rgba(255,255,255,.09);
-      }
-
-      html,
-      body {
-        background:
-          radial-gradient(circle at 50% -8%, #556064 0, #242d30 34%, #101416 78%);
-      }
-
-      .table-card {
-        padding: 12px;
-        background:
-          linear-gradient(145deg, rgba(39,49,50,.98), rgba(13,18,19,.99));
-        border-color: var(--table-card-edge);
-        box-shadow:
-          0 24px 60px rgba(0,0,0,.36),
-          inset 0 1px 0 rgba(255,255,255,.06);
-      }
-
-      .table-stage {
-        width: min(100%, 430px);
-        aspect-ratio: .56 / 1;
-        max-height: min(82vh, 790px);
-        background:
-          radial-gradient(circle at 50% 45%, rgba(255,255,255,.07), transparent 50%),
-          linear-gradient(180deg, #aeb4b3 0%, #707878 100%);
-        border-radius: 18px;
-        box-shadow:
-          0 16px 30px rgba(0,0,0,.36),
-          inset 0 1px 0 rgba(255,255,255,.26);
-      }
-
-      #table {
-        border-radius: inherit;
-      }
-
-      @media (max-width: 850px) {
-        .table-stage {
-          width: min(100%, 430px);
-          max-height: none;
-        }
-      }
-
-      @media (max-width: 520px) {
-        .table-card {
-          padding: 5px;
-        }
-
-        .table-stage {
-          width: min(68vw, 260px);
-          height: auto;
-          max-width: 100%;
-          aspect-ratio: .58 / 1;
-          border-radius: 15px;
-        }
-      }
-
-      @media (max-width: 850px) and (min-width: 521px) {
-        .table-stage {
-          width: min(52vw, 360px);
-          height: auto;
-          max-width: 100%;
-          aspect-ratio: .58 / 1;
-        }
-      }
-    </style>
   </head>
 
 <body>
@@ -1068,14 +994,22 @@ button{
    PHYSICAL TABLE
    ============================================================ */
 
-const TABLE_W=100;
-const TABLE_H=50;
+/*
+  The original table coordinate space was 100 x 50 inches. The
+  complete rotation is represented in the game coordinate space,
+  not by rotating the canvas after drawing. Positive x is now the
+  table's short dimension and positive y is its long dimension.
+*/
+const TABLE_W=50;
+const TABLE_H=100;
 
 const BALL_DIAMETER=2.25;
 const BALL_RADIUS=BALL_DIAMETER/2;
 
 /*
-  The playing surface is 100 x 50 inches. A real pool table's
+  The playing surface is 50 x 100 inches after rotating the
+  original 100 x 50 inch table coordinate space. A real pool
+  table's
   cushion/rail assembly adds roughly two ball diameters to each
   overall dimension, so the visible table is fitted as one
   proportioned object rather than stretching the felt to the
@@ -1104,46 +1038,61 @@ const POCKETS=[
     opening:POCKET_SIZE
   },
   {
-    id:"TM",
-    name:"Top Side",
+    id:"TR",
+    name:"Top Right Corner",
     x:50,
     y:0,
+    type:"corner",
+    opening:POCKET_SIZE
+  },
+  {
+    id:"LM",
+    name:"Left Side",
+    x:0,
+    y:50,
     type:"side",
     opening:POCKET_SIZE
   },
   {
-    id:"TR",
-    name:"Top Right Corner",
-    x:100,
-    y:0,
-    type:"corner",
+    id:"RM",
+    name:"Right Side",
+    x:50,
+    y:50,
+    type:"side",
     opening:POCKET_SIZE
   },
   {
     id:"BL",
     name:"Bottom Left Corner",
     x:0,
-    y:50,
+    y:100,
     type:"corner",
-    opening:POCKET_SIZE
-  },
-  {
-    id:"BM",
-    name:"Bottom Side",
-    x:50,
-    y:50,
-    type:"side",
     opening:POCKET_SIZE
   },
   {
     id:"BR",
     name:"Bottom Right Corner",
-    x:100,
-    y:50,
+    x:50,
+    y:100,
     type:"corner",
     opening:POCKET_SIZE
   }
 ];
+
+/*
+  These are the original setup positions rotated into the new
+  coordinate space. The mapping is (x,y) -> (y,100-x), a true
+  90 degree rotation that keeps every distance and angle intact.
+*/
+const DEFAULT_CUE={
+  x:34,
+  y:78
+};
+
+const DEFAULT_OBJECT={
+  x:20,
+  y:35
+};
 
 /* ============================================================
    BALL SET
@@ -1177,21 +1126,21 @@ const BALL_MAP=Object.fromEntries(
 
 const state={
   cue:{
-    x:22,
-    y:34
+    x:DEFAULT_CUE.x,
+    y:DEFAULT_CUE.y
   },
 
   object:{
-    x:65,
-    y:20,
+    x:DEFAULT_OBJECT.x,
+    y:DEFAULT_OBJECT.y,
     number:3
   },
 
   tableBalls:[
     {
       number:3,
-      x:65,
-      y:20,
+      x:DEFAULT_OBJECT.x,
+      y:DEFAULT_OBJECT.y,
       role:"object",
       owner:"target"
     }
@@ -1549,8 +1498,8 @@ function pocketTargets(pocket){
 
         targets.push(
           V(
-            pocket.x+offset,
-            pocket.y
+            pocket.x,
+            pocket.y+offset
           )
         );
 
@@ -1606,10 +1555,10 @@ function pocketFacing(pocket){
 
   if(pocket.type==="side"){
     return V(
-      0,
-      pocket.y===0
+      pocket.x===0
         ?-1
-        :1
+        :1,
+      0
     );
   }
 
@@ -3309,17 +3258,6 @@ function scratchAnalysis(s){
 function solve(){
 
   /*
-    Suggested/Auto must always search all six pockets. A previous
-    manual pocket tap is only meaningful while using a specific
-    shot mode, so never let it constrain automatic suggestions.
-  */
-  if(
-    state.mode==="auto"
-  ){
-    state.selectedPocket=null;
-  }
-
-  /*
     Deleting the last target is a valid editing state. Keep the
     solver untouched until a real target exists instead of
     attempting geometry with a missing object ball.
@@ -4290,7 +4228,7 @@ function geometry(){
   /*
     Fit the complete physical table, including its rails, inside
     the backing canvas. The solver's coordinates still describe
-    the 100 x 50 inch playing surface; the outer bounds are used
+    the rotated 50 x 100 inch playing surface; the outer bounds are used
     only for the visible table geometry.
   */
   const inset=Math.min(w,h)*.045;
@@ -4524,7 +4462,8 @@ function drawTable(){
   table and the playing surface. All four faces use the same
   physical depth, so the brown side rails cannot become oversized
   just because the canvas is wider than the table's true outline.
-  The solver still uses the unchanged RAIL constants above.
+  The solver and renderer now share the rotated vertical table
+  coordinate space and the same rail constants above.
 */
 function drawRails(g){
   const depth=g.railDepth;
@@ -4636,9 +4575,9 @@ function drawDiamonds(g){
 function drawPockets(g){
 
   const outerRadius=
-    POCKET_SIZE/
-    TABLE_W*
-    g.w/2;
+    POCKET_SIZE*
+    g.scale/
+    2;
 
   POCKETS.forEach(
     pocket=>{
@@ -6411,12 +6350,6 @@ function renderModes(){
         state.mode=
           button.dataset.mode;
 
-        if(
-          button.dataset.mode==="auto"
-        ){
-          state.selectedPocket=null;
-        }
-
         solve();
       };
 
@@ -6899,8 +6832,8 @@ function deleteSelectedBall(){
     }else{
 
       state.object={
-        x:65,
-        y:20,
+        x:DEFAULT_OBJECT.x,
+        y:DEFAULT_OBJECT.y,
         number:null
       };
 
@@ -7145,7 +7078,6 @@ function moveSelectedBall(p){
     }
 
     state.cue=next;
-    state.selectedPocket=null;
     solve();
     return true;
   }
@@ -7251,12 +7183,6 @@ function moveSelectedBall(p){
     }
   }
 
-  /*
-    Moving any ball changes the geometry of the available shots.
-    Return to automatic pocket search instead of retaining a
-    previously tapped pocket override.
-  */
-  state.selectedPocket=null;
   solve();
   return true;
 }
@@ -7458,21 +7384,21 @@ document.getElementById(
 ).onclick=()=>{
 
   state.cue={
-    x:22,
-    y:34
+    x:DEFAULT_CUE.x,
+    y:DEFAULT_CUE.y
   };
 
   state.object={
-    x:65,
-    y:20,
+    x:DEFAULT_OBJECT.x,
+    y:DEFAULT_OBJECT.y,
     number:3
   };
 
   state.tableBalls=[
     {
       number:3,
-      x:65,
-      y:20,
+      x:DEFAULT_OBJECT.x,
+      y:DEFAULT_OBJECT.y,
       role:"object",
       owner:"target"
     }
@@ -7549,558 +7475,6 @@ function resizeCanvas(){
 }
 
 /* ============================================================
-   GAME TABLE VISUAL LAYER
-
-   The solver still uses the original 100 x 50 coordinate system.
-   Only the mapping from solver coordinates to the portrait canvas
-   and the canvas artwork are changed here.
-   ============================================================ */
-
-function geometry(){
-  const w=canvas.width;
-  const h=canvas.height;
-  const inset=Math.min(w,h)*.045;
-  const availableW=Math.max(1,w-inset*2);
-  const availableH=Math.max(1,h-inset*2);
-  const scale=Math.min(
-    availableW/OUTER_TABLE_H,
-    availableH/OUTER_TABLE_W
-  );
-  const outerW=OUTER_TABLE_H*scale;
-  const outerH=OUTER_TABLE_W*scale;
-  const outerX=(w-outerW)/2;
-  const outerY=(h-outerH)/2;
-  const tableW=TABLE_H*scale;
-  const tableH=TABLE_W*scale;
-
-  return {
-    x:outerX+TABLE_RAIL_DEPTH*scale,
-    y:outerY+TABLE_RAIL_DEPTH*scale,
-    w:tableW,
-    h:tableH,
-    scale,
-    outerX,
-    outerY,
-    outerW,
-    outerH,
-    railDepth:TABLE_RAIL_DEPTH*scale
-  };
-}
-
-function toScreen(p){
-  const g=geometry();
-
-  /*
-    Rotate the solver's wide table into a phone-friendly portrait
-    presentation. The solver still sees the same x/y values.
-  */
-  return V(
-    g.x+(p.y/TABLE_H)*g.w,
-    g.y+(p.x/TABLE_W)*g.h
-  );
-}
-
-function fromScreen(clientX,clientY){
-  const rect=canvas.getBoundingClientRect();
-  const g=geometry();
-  const scaleX=canvas.width/Math.max(1,rect.width);
-  const scaleY=canvas.height/Math.max(1,rect.height);
-  const px=(clientX-rect.left)*scaleX;
-  const py=(clientY-rect.top)*scaleY;
-
-  return V(
-    (py-g.y)/g.h*TABLE_W,
-    (px-g.x)/g.w*TABLE_H
-  );
-}
-
-function drawTable(){
-  const w=canvas.width;
-  const h=canvas.height;
-  const g=geometry();
-  const outerRadius=Math.min(g.outerW,g.outerH)*.075;
-  const feltRadius=Math.min(g.w,g.h)*.045;
-
-  ctx.clearRect(0,0,w,h);
-
-  const tableShadow=ctx.createLinearGradient(
-    g.outerX,
-    g.outerY,
-    g.outerX+g.outerW,
-    g.outerY+g.outerH
-  );
-  tableShadow.addColorStop(0,"rgba(0,0,0,.42)");
-  tableShadow.addColorStop(.5,"rgba(0,0,0,.18)");
-  tableShadow.addColorStop(1,"rgba(0,0,0,.48)");
-
-  ctx.save();
-  ctx.shadowColor="rgba(0,0,0,.46)";
-  ctx.shadowBlur=Math.max(10,g.scale*7);
-  ctx.shadowOffsetY=Math.max(3,g.scale*3);
-  roundedRect(
-    ctx,
-    g.outerX,
-    g.outerY,
-    g.outerW,
-    g.outerH,
-    outerRadius
-  );
-  ctx.fillStyle=tableShadow;
-  ctx.fill();
-  ctx.restore();
-
-  const wood=ctx.createLinearGradient(
-    g.outerX,
-    g.outerY,
-    g.outerX+g.outerW,
-    g.outerY+g.outerH
-  );
-  wood.addColorStop(0,"#b87250");
-  wood.addColorStop(.12,"#6e3129");
-  wood.addColorStop(.47,"#3a1718");
-  wood.addColorStop(.76,"#7b3e31");
-  wood.addColorStop(1,"#291214");
-
-  roundedRect(
-    ctx,
-    g.outerX,
-    g.outerY,
-    g.outerW,
-    g.outerH,
-    outerRadius
-  );
-  ctx.fillStyle=wood;
-  ctx.fill();
-
-  ctx.save();
-  roundedRect(
-    ctx,
-    g.outerX+g.scale*.65,
-    g.outerY+g.scale*.65,
-    g.outerW-g.scale*1.3,
-    g.outerH-g.scale*1.3,
-    outerRadius*.92
-  );
-  ctx.strokeStyle="rgba(255,222,180,.26)";
-  ctx.lineWidth=Math.max(1,g.scale*.45);
-  ctx.stroke();
-  ctx.restore();
-
-  const felt=ctx.createLinearGradient(
-    g.x,
-    g.y,
-    g.x+g.w,
-    g.y+g.h
-  );
-  felt.addColorStop(0,"#159b92");
-  felt.addColorStop(.32,"#087d79");
-  felt.addColorStop(.68,"#08726f");
-  felt.addColorStop(1,"#045b5b");
-
-  ctx.save();
-  roundedRect(ctx,g.x,g.y,g.w,g.h,feltRadius);
-  ctx.fillStyle=felt;
-  ctx.fill();
-  ctx.clip();
-
-  const feltGlow=ctx.createRadialGradient(
-    g.x+g.w*.42,
-    g.y+g.h*.38,
-    0,
-    g.x+g.w*.48,
-    g.y+g.h*.46,
-    Math.max(g.w,g.h)*.72
-  );
-  feltGlow.addColorStop(0,"rgba(111,255,219,.10)");
-  feltGlow.addColorStop(.58,"rgba(0,0,0,0)");
-  feltGlow.addColorStop(1,"rgba(0,0,0,.18)");
-  ctx.fillStyle=feltGlow;
-  ctx.fillRect(g.x,g.y,g.w,g.h);
-
-  ctx.strokeStyle="rgba(210,255,238,.055)";
-  ctx.lineWidth=Math.max(1,g.scale*.22);
-  for(let i=1;i<12;i+=1){
-    const x=g.x+g.w*(i/12);
-    ctx.beginPath();
-    ctx.moveTo(x,g.y);
-    ctx.lineTo(x,g.y+g.h);
-    ctx.stroke();
-  }
-  for(let i=1;i<24;i+=1){
-    const y=g.y+g.h*(i/24);
-    ctx.beginPath();
-    ctx.moveTo(g.x,y);
-    ctx.lineTo(g.x+g.w,y);
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  drawRails(g);
-
-  roundedRect(ctx,g.x,g.y,g.w,g.h,feltRadius);
-  ctx.strokeStyle="rgba(0,34,31,.7)";
-  ctx.lineWidth=Math.max(2,g.scale*.7);
-  ctx.stroke();
-
-  roundedRect(
-    ctx,
-    g.x+g.scale*.5,
-    g.y+g.scale*.5,
-    g.w-g.scale,
-    g.h-g.scale,
-    Math.max(1,feltRadius-g.scale*.5)
-  );
-  ctx.strokeStyle="rgba(119,255,215,.14)";
-  ctx.lineWidth=Math.max(1,g.scale*.28);
-  ctx.stroke();
-
-  drawDiamonds(g);
-  drawPockets(g);
-}
-
-function drawRails(g){
-  const d=g.railDepth;
-  const rail=ctx.createLinearGradient(
-    g.outerX,
-    g.outerY,
-    g.outerX+g.outerW,
-    g.outerY+g.outerH
-  );
-  rail.addColorStop(0,"#e6c898");
-  rail.addColorStop(.08,"#865b3f");
-  rail.addColorStop(.18,"#4e2928");
-  rail.addColorStop(.54,"#2b171a");
-  rail.addColorStop(.82,"#7f4537");
-  rail.addColorStop(1,"#c69b6d");
-  ctx.fillStyle=rail;
-
-  ctx.fillRect(g.x-d,g.y-d,g.w+d*2,d);
-  ctx.fillRect(g.x-d,g.y+g.h,g.w+d*2,d);
-  ctx.fillRect(g.x-d,g.y,d,g.h);
-  ctx.fillRect(g.x+g.w,g.y,d,g.h);
-
-  const cushion=ctx.createLinearGradient(
-    g.x,
-    g.y,
-    g.x+g.w,
-    g.y+g.h
-  );
-  cushion.addColorStop(0,"#0b9a87");
-  cushion.addColorStop(.48,"#087b71");
-  cushion.addColorStop(1,"#04534f");
-  ctx.fillStyle=cushion;
-
-  ctx.fillRect(g.x,g.y,g.w,g.scale*1.55);
-  ctx.fillRect(g.x,g.y+g.h-g.scale*1.55,g.w,g.scale*1.55);
-  ctx.fillRect(g.x,g.y,g.scale*1.55,g.h);
-  ctx.fillRect(g.x+g.w-g.scale*1.55,g.y,g.scale*1.55,g.h);
-
-  ctx.strokeStyle="rgba(255,236,204,.27)";
-  ctx.lineWidth=Math.max(1,g.scale*.45);
-  ctx.strokeRect(
-    g.x-d*.32,
-    g.y-d*.32,
-    g.w+d*.64,
-    g.h+d*.64
-  );
-
-  ctx.strokeStyle="rgba(0,0,0,.42)";
-  ctx.lineWidth=Math.max(1,g.scale*.55);
-  ctx.strokeRect(
-    g.x+d*.34,
-    g.y+d*.34,
-    g.w-d*.68,
-    g.h-d*.68
-  );
-}
-
-function drawDiamonds(g){
-  const size=Math.max(3,Math.min(g.w,g.h)*.018);
-
-  function diamond(x,y){
-    ctx.save();
-    ctx.translate(x,y);
-    ctx.rotate(Math.PI/4);
-    const shine=ctx.createLinearGradient(-size/2,-size/2,size/2,size/2);
-    shine.addColorStop(0,"#fff5cc");
-    shine.addColorStop(.5,"#c7a875");
-    shine.addColorStop(1,"#6b4739");
-    ctx.fillStyle=shine;
-    ctx.fillRect(-size/2,-size/2,size,size);
-    ctx.restore();
-  }
-
-  [
-    .125,.25,.375,.5,.625,.75,.875
-  ].forEach(t=>{
-    diamond(g.x+g.w*t,g.y-size*.76);
-    diamond(g.x+g.w*t,g.y+g.h+size*.76);
-  });
-
-  [
-    .25,.5,.75
-  ].forEach(t=>{
-    diamond(g.x-size*.76,g.y+g.h*t);
-    diamond(g.x+g.w+size*.76,g.y+g.h*t);
-  });
-}
-
-function drawPockets(g){
-  const radius=POCKET_SIZE/TABLE_W*g.h/2;
-
-  POCKETS.forEach(pocket=>{
-    const p=toScreen(pocket);
-    const selected=state.selectedPocket&&
-      state.selectedPocket.id===pocket.id;
-    const suggested=state.solution&&
-      state.solution.pocket.id===pocket.id;
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,radius*1.36,0,Math.PI*2);
-    ctx.fillStyle="rgba(28,12,10,.72)";
-    ctx.fill();
-
-    const lip=ctx.createRadialGradient(
-      p.x-radius*.54,
-      p.y-radius*.58,
-      radius*.08,
-      p.x,
-      p.y,
-      radius*1.24
-    );
-    lip.addColorStop(0,"#fff1c8");
-    lip.addColorStop(.28,"#c0a274");
-    lip.addColorStop(.7,"#69463a");
-    lip.addColorStop(1,"#28151a");
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,radius*1.14,0,Math.PI*2);
-    ctx.fillStyle=lip;
-    ctx.fill();
-
-    const hole=ctx.createRadialGradient(
-      p.x-radius*.28,
-      p.y-radius*.33,
-      radius*.05,
-      p.x,
-      p.y,
-      radius
-    );
-    hole.addColorStop(0,"#1c2526");
-    hole.addColorStop(.28,"#090d0e");
-    hole.addColorStop(.82,"#010203");
-    hole.addColorStop(1,"#000000");
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,radius*.86,0,Math.PI*2);
-    ctx.fillStyle=hole;
-    ctx.fill();
-    ctx.restore();
-
-    if(selected||suggested){
-      ctx.beginPath();
-      ctx.arc(p.x,p.y,radius*1.46,0,Math.PI*2);
-      ctx.strokeStyle=selected
-        ?"rgba(217,255,63,.98)"
-        :"rgba(217,255,63,.6)";
-      ctx.lineWidth=Math.max(2,g.scale*.55);
-      ctx.stroke();
-    }
-  });
-}
-
-function drawPoolBall(position,number,selected=false,role="obstacle"){
-  const g=geometry();
-  const p=toScreen(position);
-  const radius=BALL_RADIUS/TABLE_W*g.h;
-  const ball=BALL_MAP[number];
-
-  if(!ball){
-    return;
-  }
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(p.x+radius*.18,p.y+radius*.2,radius*1.04,0,Math.PI*2);
-  ctx.fillStyle="rgba(0,0,0,.34)";
-  ctx.filter="blur("+Math.max(1,radius*.10)+"px)";
-  ctx.fill();
-  ctx.filter="none";
-  ctx.restore();
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(p.x,p.y,radius,0,Math.PI*2);
-  ctx.clip();
-
-  const ballShade=ctx.createRadialGradient(
-    p.x-radius*.42,
-    p.y-radius*.5,
-    radius*.02,
-    p.x+radius*.1,
-    p.y+radius*.14,
-    radius*1.08
-  );
-  ballShade.addColorStop(0,"#ffffff");
-  ballShade.addColorStop(.12,ball.color);
-  ballShade.addColorStop(.7,ball.color);
-  ballShade.addColorStop(1,"#0c1112");
-  ctx.fillStyle=ballShade;
-  ctx.fillRect(p.x-radius,p.y-radius,radius*2,radius*2);
-
-  if(ball.type==="stripe"){
-    const stripe=ctx.createLinearGradient(
-      p.x,
-      p.y-radius*.34,
-      p.x,
-      p.y+radius*.34
-    );
-    stripe.addColorStop(0,"rgba(255,255,255,.9)");
-    stripe.addColorStop(.5,"#ffffff");
-    stripe.addColorStop(1,"rgba(215,220,220,.85)");
-    ctx.fillStyle=stripe;
-    ctx.fillRect(
-      p.x-radius,
-      p.y-radius*.31,
-      radius*2,
-      radius*.62
-    );
-  }
-  ctx.restore();
-
-  ctx.beginPath();
-  ctx.arc(p.x,p.y,radius,0,Math.PI*2);
-  ctx.strokeStyle="rgba(255,255,255,.48)";
-  ctx.lineWidth=Math.max(1,radius*.045);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(p.x-radius*.36,p.y-radius*.42,radius*.13,0,Math.PI*2);
-  ctx.fillStyle="rgba(255,255,255,.6)";
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(p.x,p.y,radius*.39,0,Math.PI*2);
-  ctx.fillStyle="#f7f8f6";
-  ctx.fill();
-  ctx.strokeStyle="rgba(0,0,0,.55)";
-  ctx.lineWidth=Math.max(1,radius*.035);
-  ctx.stroke();
-
-  ctx.fillStyle="#101313";
-  ctx.font=`900 ${Math.max(6,radius*.62)}px Arial`;
-  ctx.textAlign="center";
-  ctx.textBaseline="middle";
-  ctx.fillText(number,p.x,p.y+radius*.03);
-
-  if(selected||role==="object"){
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,radius*1.18,0,Math.PI*2);
-    ctx.strokeStyle=selected
-      ?"rgba(217,255,63,.98)"
-      :"rgba(217,255,63,.52)";
-    ctx.lineWidth=Math.max(1.5,radius*.07);
-    ctx.stroke();
-  }
-
-  if(role==="blocker"||role==="my"){
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,radius*1.14,0,Math.PI*2);
-    ctx.strokeStyle=role==="blocker"
-      ?"rgba(255,70,82,.62)"
-      :"rgba(69,217,255,.72)";
-    ctx.lineWidth=Math.max(1,radius*.045);
-    ctx.stroke();
-  }
-}
-
-function drawCueBall(){
-  const g=geometry();
-  const p=toScreen(state.cue);
-  const radius=BALL_RADIUS/TABLE_W*g.h;
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(p.x+radius*.18,p.y+radius*.2,radius*1.04,0,Math.PI*2);
-  ctx.fillStyle="rgba(0,0,0,.34)";
-  ctx.filter="blur("+Math.max(1,radius*.1)+"px)";
-  ctx.fill();
-  ctx.filter="none";
-  ctx.restore();
-
-  const white=ctx.createRadialGradient(
-    p.x-radius*.42,
-    p.y-radius*.5,
-    radius*.03,
-    p.x+radius*.08,
-    p.y+radius*.1,
-    radius*1.08
-  );
-  white.addColorStop(0,"#ffffff");
-  white.addColorStop(.62,"#f4f7f4");
-  white.addColorStop(1,"#aeb9b8");
-
-  ctx.beginPath();
-  ctx.arc(p.x,p.y,radius,0,Math.PI*2);
-  ctx.fillStyle=white;
-  ctx.fill();
-  ctx.strokeStyle="rgba(0,0,0,.32)";
-  ctx.lineWidth=Math.max(1,radius*.04);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(p.x+radius*.22,p.y-radius*.08,radius*.10,0,Math.PI*2);
-  ctx.fillStyle="rgba(232,53,52,.92)";
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(p.x-radius*.36,p.y-radius*.42,radius*.13,0,Math.PI*2);
-  ctx.fillStyle="rgba(255,255,255,.72)";
-  ctx.fill();
-
-  if(state.selectedBall==="cue"){
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,radius*1.18,0,Math.PI*2);
-    ctx.strokeStyle="#d9ff3f";
-    ctx.lineWidth=Math.max(2,radius*.07);
-    ctx.stroke();
-  }
-}
-
-function drawGhostBall(position,emphasized=false){
-  if(!position){
-    return;
-  }
-
-  const g=geometry();
-  const p=toScreen(position);
-  const radius=BALL_RADIUS/TABLE_W*g.h;
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(p.x,p.y,radius,0,Math.PI*2);
-  ctx.fillStyle=emphasized
-    ?"rgba(255,255,255,.18)"
-    :"rgba(255,255,255,.11)";
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(p.x,p.y,radius,0,Math.PI*2);
-  ctx.strokeStyle=emphasized
-    ?"rgba(217,255,63,.98)"
-    :"rgba(217,255,63,.8)";
-  ctx.lineWidth=Math.max(2,radius*.075);
-  ctx.setLineDash([6,5]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  ctx.beginPath();
-  ctx.arc(p.x,p.y,Math.max(1.5,radius*.1),0,Math.PI*2);
-  ctx.fillStyle="rgba(217,255,63,.98)";
-  ctx.fill();
-  ctx.restore();
-}
-
-/* ============================================================
    START
    ============================================================ */
 
@@ -8110,8 +7484,8 @@ requestAnimationFrame(
     state.tableBalls=[
       {
         number:3,
-        x:65,
-        y:20,
+        x:DEFAULT_OBJECT.x,
+        y:DEFAULT_OBJECT.y,
         role:"object",
         owner:"target"
       }
