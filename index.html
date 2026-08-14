@@ -72,15 +72,14 @@ button{
 
 .table-hint{
   position:absolute;
-  top:12px;
+  top:11px;
   left:50%;
-  width:fit-content;
-  max-width:calc(100% - 24px);
+  width:min(290px,calc(100% - 24px));
   padding:0;
   transform:translateX(-50%);
   color:var(--muted);
-  font-size:10px;
-  line-height:1.4;
+  font-size:9px;
+  line-height:1.35;
   letter-spacing:.01em;
   text-align:left;
   pointer-events:none;
@@ -96,6 +95,7 @@ button{
 
 .table-hint-line{
   display:block;
+  white-space:nowrap;
 }
 
 .brand{
