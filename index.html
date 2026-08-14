@@ -31,7 +31,6 @@ html,
 body{
   margin:0;
   min-height:100%;
-  overflow-x:hidden;
   background:
     radial-gradient(
       circle at 50% -10%,
@@ -50,8 +49,6 @@ body{
 
 body{
   padding:7px;
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
 }
 
 button{
@@ -134,11 +131,7 @@ button{
   width:100%;
   height:100%;
   display:block;
-  /*
-    Let an empty-table swipe scroll the page. JavaScript still
-    captures and prevents scrolling while a ball is being dragged.
-  */
-  touch-action:pan-y;
+  touch-action:none;
 }
 
 .side{
@@ -601,15 +594,6 @@ button{
   .layout{
     grid-template-columns:1fr;
   }
-
-  /*
-    On a phone, keep the complete vertical table within the
-    visible browser height. The controls remain below it and
-    the page can scroll normally.
-  */
-  .table-stage{
-    width:min(100%,calc((100dvh - 80px)/2));
-  }
 }
 
 @media(max-width:520px){
@@ -1011,10 +995,11 @@ button{
    ============================================================ */
 
 /*
-  The original table coordinate space was 100 x 50 inches. The
-  complete rotation is represented in the game coordinate space,
-  not by rotating the canvas after drawing. Positive x is now the
-  table's short dimension and positive y is its long dimension.
+  The original table is 100 x 50 inches. Its physical orientation is
+  now turned clockwise by 90 degrees, so the logical playing surface
+  is 50 x 100 inches. Keeping the solver in table space means all
+  shot, collision, pocket, and interaction calculations follow the
+  rotated table without a separate screen-space transform.
 */
 const TABLE_W=50;
 const TABLE_H=100;
@@ -1023,13 +1008,11 @@ const BALL_DIAMETER=2.25;
 const BALL_RADIUS=BALL_DIAMETER/2;
 
 /*
-  The playing surface is 50 x 100 inches after rotating the
-  original 100 x 50 inch table coordinate space. A real pool
-  table's
-  cushion/rail assembly adds roughly two ball diameters to each
-  overall dimension, so the visible table is fitted as one
-  proportioned object rather than stretching the felt to the
-  canvas edges.
+  The playing surface is now represented as 50 x 100 inches after
+  the physical 90-degree turn. A real pool table's cushion/rail
+  assembly adds roughly two ball diameters to each overall dimension,
+  so the visible table is fitted as one proportioned object rather
+  than stretching the felt to the canvas edges.
 */
 const TABLE_RAIL_DEPTH=4.5;
 const OUTER_TABLE_W=TABLE_W+TABLE_RAIL_DEPTH*2;
@@ -1054,15 +1037,7 @@ const POCKETS=[
     opening:POCKET_SIZE
   },
   {
-    id:"TR",
-    name:"Top Right Corner",
-    x:50,
-    y:0,
-    type:"corner",
-    opening:POCKET_SIZE
-  },
-  {
-    id:"LM",
+    id:"TM",
     name:"Left Side",
     x:0,
     y:50,
@@ -1070,11 +1045,11 @@ const POCKETS=[
     opening:POCKET_SIZE
   },
   {
-    id:"RM",
-    name:"Right Side",
+    id:"TR",
+    name:"Top Right Corner",
     x:50,
-    y:50,
-    type:"side",
+    y:0,
+    type:"corner",
     opening:POCKET_SIZE
   },
   {
@@ -1086,6 +1061,14 @@ const POCKETS=[
     opening:POCKET_SIZE
   },
   {
+    id:"BM",
+    name:"Right Side",
+    x:50,
+    y:50,
+    type:"side",
+    opening:POCKET_SIZE
+  },
+  {
     id:"BR",
     name:"Bottom Right Corner",
     x:50,
@@ -1094,21 +1077,6 @@ const POCKETS=[
     opening:POCKET_SIZE
   }
 ];
-
-/*
-  These are the original setup positions rotated into the new
-  coordinate space. The mapping is (x,y) -> (y,100-x), a true
-  90 degree rotation that keeps every distance and angle intact.
-*/
-const DEFAULT_CUE={
-  x:34,
-  y:78
-};
-
-const DEFAULT_OBJECT={
-  x:20,
-  y:35
-};
 
 /* ============================================================
    BALL SET
@@ -1142,21 +1110,21 @@ const BALL_MAP=Object.fromEntries(
 
 const state={
   cue:{
-    x:DEFAULT_CUE.x,
-    y:DEFAULT_CUE.y
+    x:16,
+    y:22
   },
 
   object:{
-    x:DEFAULT_OBJECT.x,
-    y:DEFAULT_OBJECT.y,
+    x:30,
+    y:65,
     number:3
   },
 
   tableBalls:[
     {
       number:3,
-      x:DEFAULT_OBJECT.x,
-      y:DEFAULT_OBJECT.y,
+      x:30,
+      y:65,
       role:"object",
       owner:"target"
     }
@@ -1514,8 +1482,8 @@ function pocketTargets(pocket){
 
         targets.push(
           V(
-            pocket.x,
-            pocket.y+offset
+            pocket.x+offset,
+            pocket.y
           )
         );
 
@@ -1571,10 +1539,10 @@ function pocketFacing(pocket){
 
   if(pocket.type==="side"){
     return V(
-      pocket.x===0
+      0,
+      pocket.y===0
         ?-1
-        :1,
-      0
+        :1
     );
   }
 
@@ -4244,7 +4212,7 @@ function geometry(){
   /*
     Fit the complete physical table, including its rails, inside
     the backing canvas. The solver's coordinates still describe
-    the rotated 50 x 100 inch playing surface; the outer bounds are used
+    the 100 x 50 inch playing surface; the outer bounds are used
     only for the visible table geometry.
   */
   const inset=Math.min(w,h)*.045;
@@ -4478,8 +4446,7 @@ function drawTable(){
   table and the playing surface. All four faces use the same
   physical depth, so the brown side rails cannot become oversized
   just because the canvas is wider than the table's true outline.
-  The solver and renderer now share the rotated vertical table
-  coordinate space and the same rail constants above.
+  The solver still uses the unchanged RAIL constants above.
 */
 function drawRails(g){
   const depth=g.railDepth;
@@ -4490,14 +4457,40 @@ function drawRails(g){
   railGradient.addColorStop(1,"#4f3018");
   ctx.fillStyle=railGradient;
 
+  /*
+    Keep the slight corner softening purely visual. The solver still
+    uses the same straight rail limits; clipping only prevents the
+    visible rail fills from square-cutting the rounded outer corners.
+  */
+  ctx.save();
+  roundedRect(
+    ctx,
+    g.outerX,
+    g.outerY,
+    g.outerW,
+    g.outerH,
+    Math.min(g.outerW,g.outerH)*.035
+  );
+  ctx.clip();
+
   ctx.fillRect(g.x-depth,g.y-depth,g.w+depth*2,depth);
   ctx.fillRect(g.x-depth,g.y+g.h,g.w+depth*2,depth);
   ctx.fillRect(g.x-sideDepth,g.y,sideDepth,g.h);
   ctx.fillRect(g.x+g.w,g.y,sideDepth,g.h);
 
+  ctx.restore();
+
   ctx.strokeStyle="rgba(245,204,142,.18)";
   ctx.lineWidth=Math.max(1,depth*.12);
-  ctx.strokeRect(g.x-depth*.35,g.y-depth*.30,g.w+depth*.70,g.h+depth*.60);
+  roundedRect(
+    ctx,
+    g.x-depth*.35,
+    g.y-depth*.30,
+    g.w+depth*.70,
+    g.h+depth*.60,
+    Math.min(g.outerW,g.outerH)*.028
+  );
+  ctx.stroke();
 }
 
 /* ============================================================
@@ -4543,6 +4536,11 @@ function drawDiamonds(g){
     ctx.restore();
   }
 
+  /*
+    The long physical rails are now vertical after the 90-degree
+    rotation, so they retain the larger regulation diamond count.
+    The shorter horizontal rails retain the smaller count.
+  */
   [
     .125,
     .25,
@@ -4551,6 +4549,22 @@ function drawDiamonds(g){
     .625,
     .75,
     .875
+  ].forEach(t=>{
+    diamond(
+      g.x-size*.72,
+      g.y+g.h*t
+    );
+
+    diamond(
+      g.x+g.w+size*.72,
+      g.y+g.h*t
+    );
+  });
+
+  [
+    .25,
+    .5,
+    .75
   ].forEach(t=>{
 
     diamond(
@@ -4564,24 +4578,6 @@ function drawDiamonds(g){
     );
 
   });
-
-  [
-    .25,
-    .5,
-    .75
-  ].forEach(t=>{
-
-    diamond(
-      g.x-size*.72,
-      g.y+g.h*t
-    );
-
-    diamond(
-      g.x+g.w+size*.72,
-      g.y+g.h*t
-    );
-
-  });
 }
 
 /* ============================================================
@@ -4591,9 +4587,9 @@ function drawDiamonds(g){
 function drawPockets(g){
 
   const outerRadius=
-    POCKET_SIZE*
-    g.scale/
-    2;
+    POCKET_SIZE/
+    TABLE_W*
+    g.w/2;
 
   POCKETS.forEach(
     pocket=>{
@@ -6848,8 +6844,8 @@ function deleteSelectedBall(){
     }else{
 
       state.object={
-        x:DEFAULT_OBJECT.x,
-        y:DEFAULT_OBJECT.y,
+        x:30,
+        y:65,
         number:null
       };
 
@@ -7209,6 +7205,8 @@ canvas.addEventListener(
   "pointerdown",
   event=>{
 
+    event.preventDefault();
+
     const p=
       fromScreen(
         event.clientX,
@@ -7219,8 +7217,6 @@ canvas.addEventListener(
       nearestBall(p);
 
     if(hit){
-
-      event.preventDefault();
 
       if(
         hit.type==="cue"
@@ -7294,7 +7290,6 @@ canvas.addEventListener(
 
     const pocket=nearestPocket(p);
     if(pocket){
-      event.preventDefault();
       /*
         Tapping the active mouth returns the solver to its
         suggested-pocket search, so there is no second HTML
@@ -7314,8 +7309,6 @@ canvas.addEventListener(
     ){
       return;
     }
-
-    event.preventDefault();
 
     dragPointerId=
       event.pointerId;
@@ -7403,21 +7396,21 @@ document.getElementById(
 ).onclick=()=>{
 
   state.cue={
-    x:DEFAULT_CUE.x,
-    y:DEFAULT_CUE.y
+    x:16,
+    y:22
   };
 
   state.object={
-    x:DEFAULT_OBJECT.x,
-    y:DEFAULT_OBJECT.y,
+    x:30,
+    y:65,
     number:3
   };
 
   state.tableBalls=[
     {
       number:3,
-      x:DEFAULT_OBJECT.x,
-      y:DEFAULT_OBJECT.y,
+      x:30,
+      y:65,
       role:"object",
       owner:"target"
     }
@@ -7503,8 +7496,8 @@ requestAnimationFrame(
     state.tableBalls=[
       {
         number:3,
-        x:DEFAULT_OBJECT.x,
-        y:DEFAULT_OBJECT.y,
+        x:30,
+        y:65,
         role:"object",
         owner:"target"
       }
