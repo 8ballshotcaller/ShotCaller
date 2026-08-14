@@ -68,6 +68,25 @@ button{
   display:flex;
   align-items:center;
   justify-content:space-between;
+  position:relative;
+}
+
+.table-hint{
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:min(360px,44%);
+  transform:translate(-50%,-50%);
+  color:var(--muted);
+  font-size:9px;
+  line-height:1.25;
+  text-align:center;
+  pointer-events:none;
+}
+
+.table-hint strong{
+  color:var(--text);
+  font-weight:800;
 }
 
 .brand{
@@ -761,6 +780,10 @@ button{
   <div class="brand">
     <div class="brand-mark" aria-hidden="true"><span class="mark-eight">8</span><span class="mark-ring"></span></div>
       <div class="brand-name"><span>Shot</span><span>Caller</span></div>
+  </div>
+
+  <div class="table-hint" aria-label="How to use">
+    <strong>How to use:</strong> Choose a pocket—or let Shot Caller choose. Tap a ball, then tap the table to reposition it.
   </div>
 
   <button class="reset" id="reset">
