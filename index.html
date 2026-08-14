@@ -1483,10 +1483,16 @@ function pocketTargets(pocket){
       .forEach(offset=>{
 
         targets.push(
-          V(
-            pocket.x+offset,
-            pocket.y
-          )
+          pocket.x===0||
+          pocket.x===TABLE_W
+            ?V(
+              pocket.x,
+              pocket.y+offset
+            )
+            :V(
+              pocket.x+offset,
+              pocket.y
+            )
         );
 
       });
@@ -1541,10 +1547,10 @@ function pocketFacing(pocket){
 
   if(pocket.type==="side"){
     return V(
-      0,
-      pocket.y===0
+      pocket.x===0
         ?-1
-        :1
+        :1,
+      0
     );
   }
 
@@ -3013,6 +3019,20 @@ function rayPocketRoute(
     return null;
   }
 
+  /*
+    The route must enter the mouth from the table side. This is
+    especially important after the 90-degree rotation, where side
+    pockets face left/right rather than top/bottom.
+  */
+  if(
+    pocketApproachPenalty(
+      pocket,
+      unit
+    )===null
+  ){
+    return null;
+  }
+
   if(!pathClear(origin,pocket,ignoreNumbers)){
     return null;
   }
@@ -4076,6 +4096,10 @@ function scratchNotice(s){
   }
 
   const route=s.scratch.route;
+  const pocketName=
+    titleCasePocket(
+      s.scratch.pocket.name
+    );
   const highRisk=
     (s.scratch.risk||0)>=.84;
 
@@ -4090,20 +4114,20 @@ function scratchNotice(s){
   ){
     warning=
       highRisk
-        ?"Careful — this rebound line could result in a scratch."
-        :"Careful — too much speed after the rebound could result in a scratch.";
+        ?`Careful — this rebound line could result in a scratch into the ${pocketName}.`
+        :`Careful — too much speed after the rebound could result in a scratch into the ${pocketName}.`;
   }else if(
     highRisk
   ){
     warning=
       angleRisk
-        ?"Careful — a wider angle could result in a scratch."
-        :"Careful — this line could result in a scratch.";
+        ?`Careful — a wider angle could result in a scratch into the ${pocketName}.`
+        :`Careful — this line could result in a scratch into the ${pocketName}.`;
   }else{
     warning=
       angleRisk
-        ?"Careful — a wider angle could result in a scratch."
-        :"Careful — too much speed could result in a scratch.";
+        ?`Careful — a wider angle could result in a scratch into the ${pocketName}.`
+        :`Careful — too much speed could result in a scratch into the ${pocketName}.`;
   }
 
   return callLine(
@@ -7091,6 +7115,12 @@ function moveSelectedBall(p){
       return false;
     }
 
+    /*
+      Moving a ball changes the shot geometry. Return auto mode to
+      the full pocket search instead of keeping a previously tapped
+      pocket locked after the table layout changes.
+    */
+    state.selectedPocket=null;
     state.cue=next;
     solve();
     return true;
@@ -7120,6 +7150,7 @@ function moveSelectedBall(p){
       return false;
     }
 
+    state.selectedPocket=null;
     existing.x=next.x;
     existing.y=next.y;
 
@@ -7139,6 +7170,7 @@ function moveSelectedBall(p){
       return false;
     }
 
+    state.selectedPocket=null;
     const hasTarget=
       state.tableBalls.some(
         b=>
