@@ -802,13 +802,24 @@ button{
 
       @media (max-width: 520px) {
         .table-card {
-          padding: 7px;
+          padding: 5px;
         }
 
         .table-stage {
-          width: min(100%, 390px);
-          aspect-ratio: .545 / 1;
+          width: min(68vw, 260px);
+          height: auto;
+          max-width: 100%;
+          aspect-ratio: .58 / 1;
           border-radius: 15px;
+        }
+      }
+
+      @media (max-width: 850px) and (min-width: 521px) {
+        .table-stage {
+          width: min(52vw, 360px);
+          height: auto;
+          max-width: 100%;
+          aspect-ratio: .58 / 1;
         }
       }
     </style>
@@ -3296,6 +3307,17 @@ function scratchAnalysis(s){
    ============================================================ */
 
 function solve(){
+
+  /*
+    Suggested/Auto must always search all six pockets. A previous
+    manual pocket tap is only meaningful while using a specific
+    shot mode, so never let it constrain automatic suggestions.
+  */
+  if(
+    state.mode==="auto"
+  ){
+    state.selectedPocket=null;
+  }
 
   /*
     Deleting the last target is a valid editing state. Keep the
@@ -6389,6 +6411,12 @@ function renderModes(){
         state.mode=
           button.dataset.mode;
 
+        if(
+          button.dataset.mode==="auto"
+        ){
+          state.selectedPocket=null;
+        }
+
         solve();
       };
 
@@ -7117,6 +7145,7 @@ function moveSelectedBall(p){
     }
 
     state.cue=next;
+    state.selectedPocket=null;
     solve();
     return true;
   }
@@ -7222,6 +7251,12 @@ function moveSelectedBall(p){
     }
   }
 
+  /*
+    Moving any ball changes the geometry of the available shots.
+    Return to automatic pocket search instead of retaining a
+    previously tapped pocket override.
+  */
+  state.selectedPocket=null;
   solve();
   return true;
 }
